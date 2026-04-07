@@ -1,54 +1,29 @@
 ﻿# Stocking
 
-US stock monitoring web app starter built with `React + TypeScript + Vite`.
+Stocking is a web app for monitoring US stock portfolios with Google Sheets as the primary data store.
 
-## Scope
+## Features
 
-- GitHub Pages deployment target
-- Google Sheets as the primary data store
-- GOOGLEFINANCE as the only market data source
 - US stocks only
-- Previous close based monitoring
-- Holdings, favorites, and idea portfolios
+- Previous-close based monitoring
+- Holdings tracking
+- Favorites watchlist
+- Idea portfolio tracking
+- Google login and Google Sheets integration
 
-## Current stage
+## Tech Stack
 
-- Title and login page added
-- Browser-based Google login flow wired
-- Template spreadsheet auto-creation flow added
-- Real Google login still requires external Google Cloud setup
+- React
+- TypeScript
+- Vite
+- Codex
+- Google Sheets API
+- Google Identity Services
 
-## Quick Google login setup
-
-1. Create a Google Cloud project.
-2. Enable `Google Sheets API`.
-3. Configure the OAuth consent screen.
-4. Create an OAuth client for a web application.
-5. Add authorized JavaScript origins.
-   - `http://127.0.0.1:4173`
-   - `http://localhost:4173`
-   - `https://somnistellar.github.io`
-6. Create `.env.local` in the project root.
-
-```bash
-VITE_GOOGLE_CLIENT_ID=your-google-oauth-client-id.apps.googleusercontent.com
-```
-
-7. Restart the dev server.
-8. Sign in.
-9. Open Settings and create the template spreadsheet.
-
-## Run
+## Development
 
 ```bash
 npm install
 npm run dev
 npm run build
 ```
-
-## Available docs
-
-- `설계서/기능명세서_v1.md`
-- `설계서/시트_템플릿_설계서_v1.md`
-- `설계서/화면별_UI_명세서_v1.md`
-- `설계서/Google_로그인_설정_가이드_v1.md`
