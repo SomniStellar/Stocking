@@ -22,6 +22,7 @@ coverage
 
 # Local working notes
 .codex/
+.codx/
 설계서/
 /설계서/
 /설계서/**
