@@ -1,6 +1,7 @@
 ﻿import { SectionCard } from '../components/SectionCard'
 import { SummaryCard } from '../components/SummaryCard'
 import { favorites, holdings, ideas, monitorRows } from '../data/mockData'
+import { useGoogleWorkspace } from '../features/google/GoogleWorkspaceContext'
 
 const totalInvested = holdings.reduce((sum, item) => sum + item.quantity * item.avgPrice, 0)
 const totalValue = holdings.reduce((sum, item) => sum + item.quantity * item.closeyest, 0)
@@ -8,6 +9,8 @@ const totalProfit = totalValue - totalInvested
 const totalYield = totalInvested === 0 ? 0 : (totalProfit / totalInvested) * 100
 
 export function DashboardPage() {
+  const { session, spreadsheet, envConfigured } = useGoogleWorkspace()
+
   return (
     <div className="page-stack">
       <section className="hero-panel">
@@ -15,13 +18,15 @@ export function DashboardPage() {
           <p className="eyebrow">Design-driven starter</p>
           <h1>Portfolio monitoring MVP</h1>
           <p className="hero-copy">
-            This skeleton follows the approved v1 specification for US stocks,
-            previous close pricing, favorites, and idea portfolios.
+            This starter now includes Google sign-in and spreadsheet connection
+            scaffolding for the approved US stock monitoring flow.
           </p>
         </div>
-        <div className="hero-aside">
-          <span>Data source</span>
-          <strong>Google Sheets + GOOGLEFINANCE</strong>
+        <div className="hero-aside hero-aside-stack">
+          <span>Auth</span>
+          <strong>{session ? session.profile.email : 'Not connected'}</strong>
+          <span>Sheet</span>
+          <strong>{spreadsheet ? spreadsheet.title : envConfigured ? 'Pending connection' : 'Client ID required'}</strong>
         </div>
       </section>
 
@@ -52,15 +57,16 @@ export function DashboardPage() {
           </div>
         </SectionCard>
 
-        <SectionCard title="Build Queue" description="What this starter is ready for next." actionLabel="Read docs">
+        <SectionCard title="Connection Readiness" description="Implementation status for the next integration step." actionLabel="Open settings">
           <ul className="check-list">
-            <li>Google login and spreadsheet connection flow</li>
-            <li>Sheet schema validation against v1 template</li>
-            <li>CRUD forms for holdings, favorites, and ideas</li>
-            <li>GOOGLEFINANCE-backed monitor sync and empty states</li>
+            <li>{envConfigured ? 'Google client ID configured' : 'Google client ID still needs configuration'}</li>
+            <li>{session ? 'Google sign-in flow connected' : 'Google sign-in pending'}</li>
+            <li>{spreadsheet ? 'Spreadsheet metadata loaded' : 'Spreadsheet binding pending'}</li>
+            <li>Template validation checks required tabs after connection</li>
           </ul>
         </SectionCard>
       </div>
     </div>
   )
 }
+
