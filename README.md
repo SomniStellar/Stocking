@@ -15,7 +15,7 @@ US stock monitoring web app starter built with `React + TypeScript + Vite`.
 
 - Title and login page added
 - Browser-based Google login flow wired
-- Existing spreadsheet connection flow prepared
+- Template spreadsheet auto-creation flow added
 - Real Google login still requires external Google Cloud setup
 
 ## Quick Google login setup
@@ -35,6 +35,8 @@ VITE_GOOGLE_CLIENT_ID=your-google-oauth-client-id.apps.googleusercontent.com
 ```
 
 7. Restart the dev server.
+8. Sign in.
+9. Open Settings and create the template spreadsheet.
 
 ## Run
 

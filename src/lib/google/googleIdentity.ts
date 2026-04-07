@@ -86,7 +86,7 @@ export async function requestGoogleAccessToken(clientId: string) {
         'openid',
         'email',
         'profile',
-        'https://www.googleapis.com/auth/spreadsheets.readonly',
+        'https://www.googleapis.com/auth/spreadsheets',
       ].join(' '),
       callback: (response) => {
         if (response.error || !response.access_token) {

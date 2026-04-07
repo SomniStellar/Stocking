@@ -16,15 +16,15 @@ export function LoginPage() {
           <p className="eyebrow">Stocking v1</p>
           <h1>US stock monitoring workspace</h1>
           <p className="hero-copy">
-            Track holdings, favorites, and idea portfolios with Google Sheets as
-            the source of truth and previous-close pricing as the baseline.
+            Sign in with Google first, then let the app create a ready-to-use
+            spreadsheet template for holdings, favorites, ideas, and monitoring.
           </p>
         </div>
 
         <div className="auth-feature-list">
           <article className="auth-feature-card">
-            <strong>Google-first flow</strong>
-            <span>Sign in first, then bind an existing spreadsheet.</span>
+            <strong>No manual sheet prep</strong>
+            <span>Stocking can create the template spreadsheet for you after login.</span>
           </article>
           <article className="auth-feature-card">
             <strong>US stocks only</strong>
@@ -42,8 +42,7 @@ export function LoginPage() {
           <p className="eyebrow">Phase 1</p>
           <h2>Sign in with Google</h2>
           <p className="muted-copy">
-            This step unlocks Sheets access and prepares the existing-spreadsheet
-            connection flow.
+            After sign-in, open Settings and create the Stocking template spreadsheet automatically.
           </p>
         </div>
 

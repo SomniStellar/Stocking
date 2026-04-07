@@ -522,3 +522,11 @@ a {
     grid-template-columns: 1fr;
   }
 }
+
+.empty-note {
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(245, 239, 226, 0.72);
+}
+

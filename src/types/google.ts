@@ -7,6 +7,7 @@
 export interface SpreadsheetConnection {
   id: string
   title: string
+  url: string
   sheets: string[]
   isTemplateValid: boolean
   checkedAt: string

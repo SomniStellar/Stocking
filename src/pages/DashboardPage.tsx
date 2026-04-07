@@ -1,15 +1,24 @@
 ﻿import { SectionCard } from '../components/SectionCard'
 import { SummaryCard } from '../components/SummaryCard'
-import { favorites, holdings, ideas, monitorRows } from '../data/mockData'
+import {
+  buildFavoriteRows,
+  buildHoldingRows,
+  buildIdeaRows,
+  buildMonitorRows,
+} from '../data/sheetData'
 import { useGoogleWorkspace } from '../features/google/GoogleWorkspaceContext'
 
-const totalInvested = holdings.reduce((sum, item) => sum + item.quantity * item.avgPrice, 0)
-const totalValue = holdings.reduce((sum, item) => sum + item.quantity * item.closeyest, 0)
-const totalProfit = totalValue - totalInvested
-const totalYield = totalInvested === 0 ? 0 : (totalProfit / totalInvested) * 100
-
 export function DashboardPage() {
-  const { session, spreadsheet, envConfigured } = useGoogleWorkspace()
+  const { session, spreadsheet, envConfigured, snapshot } = useGoogleWorkspace()
+  const monitorRows = buildMonitorRows(snapshot)
+  const holdings = buildHoldingRows(snapshot)
+  const favorites = buildFavoriteRows(snapshot)
+  const ideas = buildIdeaRows(snapshot)
+
+  const totalInvested = holdings.reduce((sum, item) => sum + item.quantity * item.avgPrice, 0)
+  const totalValue = holdings.reduce((sum, item) => sum + item.quantity * item.closeyest, 0)
+  const totalProfit = totalValue - totalInvested
+  const totalYield = totalInvested === 0 ? 0 : (totalProfit / totalInvested) * 100
 
   return (
     <div className="page-stack">
@@ -18,15 +27,21 @@ export function DashboardPage() {
           <p className="eyebrow">Design-driven starter</p>
           <h1>Portfolio monitoring MVP</h1>
           <p className="hero-copy">
-            This starter now includes Google sign-in and spreadsheet connection
-            scaffolding for the approved US stock monitoring flow.
+            This starter now reads Google Sheet values and turns them into live
+            dashboard summaries for the approved US stock monitoring flow.
           </p>
         </div>
         <div className="hero-aside hero-aside-stack">
           <span>Auth</span>
           <strong>{session ? session.profile.email : 'Not connected'}</strong>
           <span>Sheet</span>
-          <strong>{spreadsheet ? spreadsheet.title : envConfigured ? 'Pending connection' : 'Client ID required'}</strong>
+          <strong>
+            {spreadsheet
+              ? spreadsheet.title
+              : envConfigured
+                ? 'Create your template in Settings'
+                : 'Client ID required'}
+          </strong>
         </div>
       </section>
 
@@ -40,20 +55,24 @@ export function DashboardPage() {
       <div className="content-grid">
         <SectionCard title="Core Watchlist" description="Registered US stocks pulled into the monitor sheet." actionLabel="Manage universe">
           <div className="mini-table">
-            {monitorRows.map((row) => (
-              <div key={row.ticker} className="mini-row">
-                <div>
-                  <strong>{row.ticker}</strong>
-                  <span>{row.name}</span>
+            {monitorRows.length === 0 ? (
+              <div className="empty-note">No monitor rows yet. Create the template and fill the sheet.</div>
+            ) : (
+              monitorRows.map((row) => (
+                <div key={row.ticker} className="mini-row">
+                  <div>
+                    <strong>{row.ticker}</strong>
+                    <span>{row.name}</span>
+                  </div>
+                  <div>
+                    <strong>${row.closeyest.toFixed(2)}</strong>
+                    <span className={row.changepct >= 0 ? 'text-positive' : 'text-negative'}>
+                      {row.changepct.toFixed(2)}%
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <strong>${row.closeyest.toFixed(2)}</strong>
-                  <span className={row.changepct >= 0 ? 'text-positive' : 'text-negative'}>
-                    {row.changepct.toFixed(2)}%
-                  </span>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </SectionCard>
 
@@ -61,12 +80,11 @@ export function DashboardPage() {
           <ul className="check-list">
             <li>{envConfigured ? 'Google client ID configured' : 'Google client ID still needs configuration'}</li>
             <li>{session ? 'Google sign-in flow connected' : 'Google sign-in pending'}</li>
-            <li>{spreadsheet ? 'Spreadsheet metadata loaded' : 'Spreadsheet binding pending'}</li>
-            <li>Template validation checks required tabs after connection</li>
+            <li>{spreadsheet ? 'Template spreadsheet connected' : 'Template spreadsheet creation pending'}</li>
+            <li>{monitorRows.length > 0 ? 'Real sheet rows loaded into the dashboard' : 'Populate sheet rows to see dashboard data'}</li>
           </ul>
         </SectionCard>
       </div>
     </div>
   )
 }
-
