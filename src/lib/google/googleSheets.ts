@@ -6,15 +6,18 @@ import type {
   MonitorSheetRow,
   SpreadsheetSnapshot,
   StocksSheetRow,
+  TransactionsSheetRow,
 } from '../../types/sheets'
 
 const REQUIRED_TABS = ['Stocks', 'Holdings', 'Favorites', 'Ideas', 'Monitor'] as const
+const SUPPORTED_TABS = [...REQUIRED_TABS, 'Transactions'] as const
 
-const TEMPLATE_HEADERS: Record<(typeof REQUIRED_TABS)[number], string[]> = {
+const TEMPLATE_HEADERS: Record<(typeof SUPPORTED_TABS)[number], string[]> = {
   Stocks: ['ticker', 'name', 'market', 'active', 'memo'],
   Holdings: ['ticker', 'quantity', 'avg_price', 'memo'],
   Favorites: ['ticker', 'target_price', 'memo'],
   Ideas: ['portfolio_name', 'ticker', 'virtual_qty', 'virtual_entry_price', 'memo'],
+  Transactions: ['date', 'ticker', 'type', 'quantity', 'price', 'fee', 'memo'],
   Monitor: ['ticker', 'full_ticker', 'closeyest', 'change', 'changepct', 'high52', 'low52', 'marketcap', 'pe', 'eps', 'volumeavg', 'tradetime'],
 }
 
@@ -111,8 +114,16 @@ export async function fetchSpreadsheetConnection(
 export async function fetchSpreadsheetSnapshot(
   spreadsheetId: string,
   accessToken: string,
+  availableSheets?: string[],
 ) {
-  const ranges = REQUIRED_TABS.map((tab) => `ranges=${encodeURIComponent(`${tab}!A:Z`)}`).join('&')
+  const targetTabs = (availableSheets && availableSheets.length > 0
+    ? SUPPORTED_TABS.filter((tab) => availableSheets.includes(tab))
+    : SUPPORTED_TABS) as string[]
+
+  const ranges = targetTabs
+    .map((tab) => `ranges=${encodeURIComponent(`${tab}!A:Z`)}`)
+    .join('&')
+
   const response = await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchGet?${ranges}`,
     {
@@ -164,6 +175,15 @@ export async function fetchSpreadsheetSnapshot(
       virtual_entry_price: toNumber(record.virtual_entry_price),
       memo: record.memo,
     })),
+    transactions: mapRows<TransactionsSheetRow>(valueMap.get('Transactions'), (record) => ({
+      date: record.date,
+      ticker: record.ticker,
+      type: record.type,
+      quantity: toNumber(record.quantity),
+      price: toNumber(record.price),
+      fee: toNumber(record.fee),
+      memo: record.memo,
+    })),
     monitor: mapRows<MonitorSheetRow>(valueMap.get('Monitor'), (record) => ({
       ticker: record.ticker,
       full_ticker: record.full_ticker,
@@ -193,7 +213,7 @@ export async function createTemplateSpreadsheet(
     },
     body: JSON.stringify({
       properties: { title },
-      sheets: REQUIRED_TABS.map((name) => ({ properties: { title: name } })),
+      sheets: SUPPORTED_TABS.map((name) => ({ properties: { title: name } })),
     }),
   })
 
@@ -208,7 +228,7 @@ export async function createTemplateSpreadsheet(
   }
 
   const spreadsheetId = created.spreadsheetId
-  const data = REQUIRED_TABS.map((tab) => ({
+  const data = SUPPORTED_TABS.map((tab) => ({
     range: `${tab}!A1:${String.fromCharCode(64 + TEMPLATE_HEADERS[tab].length)}1`,
     values: [TEMPLATE_HEADERS[tab]],
   }))
@@ -233,15 +253,92 @@ export async function createTemplateSpreadsheet(
     id: spreadsheetId,
     title: created.properties?.title ?? title,
     url: created.spreadsheetUrl ?? buildSpreadsheetUrl(spreadsheetId),
-    sheets: [...REQUIRED_TABS],
+    sheets: [...SUPPORTED_TABS],
     isTemplateValid: true,
     checkedAt: new Date().toISOString(),
   } satisfies SpreadsheetConnection
 }
 
+export async function ensureSheetWithHeaders(
+  spreadsheetId: string,
+  accessToken: string,
+  title: (typeof SUPPORTED_TABS)[number],
+) {
+  const connection = await fetchSpreadsheetConnection(spreadsheetId, accessToken)
+  if (connection.sheets.includes(title)) {
+    return connection
+  }
+
+  const addSheetResponse = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        requests: [{ addSheet: { properties: { title } } }],
+      }),
+    },
+  )
+
+  if (!addSheetResponse.ok) {
+    throw new Error(`Failed to create ${title} sheet.`)
+  }
+
+  const headerResponse = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(`${title}!A1:${String.fromCharCode(64 + TEMPLATE_HEADERS[title].length)}1`)}?valueInputOption=RAW`,
+    {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ values: [TEMPLATE_HEADERS[title]] }),
+    },
+  )
+
+  if (!headerResponse.ok) {
+    throw new Error(`Failed to initialize ${title} sheet headers.`)
+  }
+
+  return fetchSpreadsheetConnection(spreadsheetId, accessToken)
+}
+
+export async function appendTransactionRow(
+  spreadsheetId: string,
+  accessToken: string,
+  row: TransactionsSheetRow,
+) {
+  await ensureSheetWithHeaders(spreadsheetId, accessToken, 'Transactions')
+
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent('Transactions!A:G')}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        values: [[row.date, row.ticker, row.type, row.quantity, row.price, row.fee, row.memo]],
+      }),
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to append transaction row.')
+  }
+}
+
 export function getTemplateValidationMessage(connection: SpreadsheetConnection) {
   if (connection.isTemplateValid) {
-    return 'Required tabs are available.'
+    if (connection.sheets.includes('Transactions')) {
+      return 'Required tabs are available.'
+    }
+
+    return 'Required tabs are available. Transactions sheet will be created when needed.'
   }
 
   const missing = REQUIRED_TABS.filter((required) => !connection.sheets.includes(required))

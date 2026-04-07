@@ -1,11 +1,12 @@
-﻿import { createContext, useContext } from 'react'
+import { createContext, useContext } from 'react'
 import type { GoogleSession, SpreadsheetConnection } from '../../types/google'
+import type { TransactionDraft } from '../../types/domain'
 import type { SpreadsheetSnapshot } from '../../types/sheets'
 
 export interface GoogleWorkspaceContextValue {
   clientReady: boolean
   envConfigured: boolean
-  busyState: 'idle' | 'login' | 'spreadsheet' | 'creating' | 'syncing'
+  busyState: 'idle' | 'login' | 'spreadsheet' | 'creating' | 'syncing' | 'writing'
   session: GoogleSession | null
   spreadsheet: SpreadsheetConnection | null
   snapshot: SpreadsheetSnapshot
@@ -17,6 +18,7 @@ export interface GoogleWorkspaceContextValue {
   connectSpreadsheet: (spreadsheetId: string) => Promise<void>
   createTemplateSpreadsheet: (title?: string) => Promise<void>
   refreshSpreadsheetData: () => Promise<void>
+  addTransaction: (draft: TransactionDraft) => Promise<boolean>
   clearSpreadsheet: () => void
 }
 

@@ -1,6 +1,8 @@
-﻿import { type PropsWithChildren, useEffect, useState } from 'react'
+import { type PropsWithChildren, useEffect, useState } from 'react'
+import type { TransactionDraft } from '../../types/domain'
 import { loadGoogleIdentityScript, requestGoogleAccessToken } from '../../lib/google/googleIdentity'
 import {
+  appendTransactionRow,
   createTemplateSpreadsheet,
   fetchGoogleUserProfile,
   fetchSpreadsheetConnection,
@@ -21,6 +23,7 @@ const EMPTY_SNAPSHOT: SpreadsheetSnapshot = {
   holdings: [],
   favorites: [],
   ideas: [],
+  transactions: [],
   monitor: [],
 }
 
@@ -32,7 +35,7 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
   const [storedSpreadsheetId, setStoredSpreadsheetId] = useState('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [validationMessage, setValidationMessage] = useState<string | null>(null)
-  const [busyState, setBusyState] = useState<'idle' | 'login' | 'spreadsheet' | 'creating' | 'syncing'>('idle')
+  const [busyState, setBusyState] = useState<'idle' | 'login' | 'spreadsheet' | 'creating' | 'syncing' | 'writing'>('idle')
 
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim() ?? ''
   const envConfigured = clientId.length > 0
@@ -56,10 +59,12 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
   }, [envConfigured])
 
   async function hydrateSpreadsheet(spreadsheetId: string, accessToken: string) {
-    const [connection, nextSnapshot] = await Promise.all([
-      fetchSpreadsheetConnection(spreadsheetId, accessToken),
-      fetchSpreadsheetSnapshot(spreadsheetId, accessToken),
-    ])
+    const connection = await fetchSpreadsheetConnection(spreadsheetId, accessToken)
+    const nextSnapshot = await fetchSpreadsheetSnapshot(
+      spreadsheetId,
+      accessToken,
+      connection.sheets,
+    )
 
     setSpreadsheet(connection)
     setSnapshot(nextSnapshot)
@@ -131,7 +136,7 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
 
     try {
       const connection = await createTemplateSpreadsheet(trimmedTitle, session.accessToken)
-      const nextSnapshot = await fetchSpreadsheetSnapshot(connection.id, session.accessToken)
+      const nextSnapshot = await fetchSpreadsheetSnapshot(connection.id, session.accessToken, connection.sheets)
       setSpreadsheet(connection)
       setSnapshot(nextSnapshot)
       setStoredSpreadsheetId(connection.id)
@@ -155,11 +160,46 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
     setErrorMessage(null)
 
     try {
-      const nextSnapshot = await fetchSpreadsheetSnapshot(spreadsheet.id, session.accessToken)
+      const nextSnapshot = await fetchSpreadsheetSnapshot(spreadsheet.id, session.accessToken, spreadsheet.sheets)
       setSnapshot(nextSnapshot)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to refresh spreadsheet data.'
       setErrorMessage(message)
+    } finally {
+      setBusyState('idle')
+    }
+  }
+
+  async function addTransaction(draft: TransactionDraft) {
+    if (!session?.accessToken || !spreadsheet?.id) {
+      setErrorMessage('Connect a spreadsheet before recording trades.')
+      return false
+    }
+
+    setBusyState('writing')
+    setErrorMessage(null)
+
+    try {
+      await appendTransactionRow(spreadsheet.id, session.accessToken, {
+        date: draft.date,
+        ticker: draft.ticker.trim().toUpperCase(),
+        type: draft.type,
+        quantity: draft.quantity,
+        price: draft.price,
+        fee: draft.fee,
+        memo: draft.memo.trim(),
+      })
+
+      const nextConnection = await fetchSpreadsheetConnection(spreadsheet.id, session.accessToken)
+      const nextSnapshot = await fetchSpreadsheetSnapshot(spreadsheet.id, session.accessToken, nextConnection.sheets)
+      setSpreadsheet(nextConnection)
+      setSnapshot(nextSnapshot)
+      setValidationMessage(getTemplateValidationMessage(nextConnection))
+      return true
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to save transaction.'
+      setErrorMessage(message)
+      return false
     } finally {
       setBusyState('idle')
     }
@@ -197,6 +237,7 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
     connectSpreadsheet,
     createTemplateSpreadsheet: createTemplateSpreadsheetAndConnect,
     refreshSpreadsheetData,
+    addTransaction,
     clearSpreadsheet,
   }
 

@@ -27,6 +27,16 @@ export interface IdeasSheetRow {
   memo: string
 }
 
+export interface TransactionsSheetRow {
+  date: string
+  ticker: string
+  type: string
+  quantity: number
+  price: number
+  fee: number
+  memo: string
+}
+
 export interface MonitorSheetRow {
   ticker: string
   full_ticker: string
@@ -47,5 +57,6 @@ export interface SpreadsheetSnapshot {
   holdings: HoldingsSheetRow[]
   favorites: FavoritesSheetRow[]
   ideas: IdeasSheetRow[]
+  transactions: TransactionsSheetRow[]
   monitor: MonitorSheetRow[]
 }

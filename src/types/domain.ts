@@ -1,4 +1,4 @@
-﻿export interface StockMonitorRow {
+export interface StockMonitorRow {
   ticker: string
   name: string
   closeyest: number
@@ -16,6 +16,10 @@ export interface HoldingRow {
   quantity: number
   avgPrice: number
   closeyest: number
+  invested: number
+  marketValue: number
+  unrealizedProfit: number
+  unrealizedReturn: number
 }
 
 export interface FavoriteRow {
@@ -33,4 +37,14 @@ export interface IdeaRow {
   virtualQty: number
   virtualEntryPrice: number
   closeyest: number
+}
+
+export interface TransactionDraft {
+  date: string
+  ticker: string
+  type: 'BUY' | 'SELL'
+  quantity: number
+  price: number
+  fee: number
+  memo: string
 }

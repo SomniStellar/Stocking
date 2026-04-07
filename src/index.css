@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   color: #f5efe2;
   background:
     radial-gradient(circle at top left, rgba(210, 100, 43, 0.32), transparent 26%),
@@ -36,7 +36,8 @@ button:disabled {
   opacity: 0.6;
 }
 
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -361,6 +362,16 @@ a {
   gap: 16px;
 }
 
+.form-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.form-grid-compact {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .field-block {
   display: grid;
   gap: 8px;
@@ -457,6 +468,10 @@ a {
   grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
+.data-table-wide .table-row-holdings {
+  grid-template-columns: 0.8fr 0.9fr 1fr 0.9fr 1fr 1fr 1.4fr;
+}
+
 .check-list {
   margin: 0;
   padding-left: 18px;
@@ -491,7 +506,9 @@ a {
 
   .summary-grid,
   .content-grid,
-  .settings-grid {
+  .settings-grid,
+  .form-grid,
+  .form-grid-compact {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -516,7 +533,10 @@ a {
   .summary-grid,
   .content-grid,
   .settings-grid,
+  .form-grid,
+  .form-grid-compact,
   .data-table .table-row,
+  .data-table-wide .table-row-holdings,
   .table-head,
   .mini-row {
     grid-template-columns: 1fr;
@@ -529,4 +549,3 @@ a {
   background: rgba(255, 255, 255, 0.04);
   color: rgba(245, 239, 226, 0.72);
 }
-

@@ -1,4 +1,4 @@
-﻿import { Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import { SectionCard } from '../components/SectionCard'
 import { useGoogleWorkspace } from '../features/google/GoogleWorkspaceContext'
@@ -153,6 +153,10 @@ export function SettingsPage() {
               <strong>{snapshot.ideas.length}</strong>
             </div>
             <div>
+              <span>Transactions rows</span>
+              <strong>{snapshot.transactions.length}</strong>
+            </div>
+            <div>
               <span>Monitor rows</span>
               <strong>{snapshot.monitor.length}</strong>
             </div>
@@ -196,7 +200,7 @@ export function SettingsPage() {
 
       <SectionCard title="Project Notes" description="Implementation guidance carried from the design docs.">
         <ul className="check-list">
-          <li>Phase 1 now centers on login, template sheet creation, and live sheet reads</li>
+          <li>Phase 2 now centers on transaction input and derived holdings</li>
           <li>US stocks only</li>
           <li>Previous close as the price baseline</li>
           <li>No external market API</li>

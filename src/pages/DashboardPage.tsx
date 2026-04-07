@@ -1,9 +1,7 @@
-﻿import { SectionCard } from '../components/SectionCard'
+import { SectionCard } from '../components/SectionCard'
 import { SummaryCard } from '../components/SummaryCard'
 import {
-  buildFavoriteRows,
   buildHoldingRows,
-  buildIdeaRows,
   buildMonitorRows,
 } from '../data/sheetData'
 import { useGoogleWorkspace } from '../features/google/GoogleWorkspaceContext'
@@ -12,23 +10,20 @@ export function DashboardPage() {
   const { session, spreadsheet, envConfigured, snapshot } = useGoogleWorkspace()
   const monitorRows = buildMonitorRows(snapshot)
   const holdings = buildHoldingRows(snapshot)
-  const favorites = buildFavoriteRows(snapshot)
-  const ideas = buildIdeaRows(snapshot)
 
-  const totalInvested = holdings.reduce((sum, item) => sum + item.quantity * item.avgPrice, 0)
-  const totalValue = holdings.reduce((sum, item) => sum + item.quantity * item.closeyest, 0)
-  const totalProfit = totalValue - totalInvested
+  const totalInvested = holdings.reduce((sum, item) => sum + item.invested, 0)
+  const totalValue = holdings.reduce((sum, item) => sum + item.marketValue, 0)
+  const totalProfit = holdings.reduce((sum, item) => sum + item.unrealizedProfit, 0)
   const totalYield = totalInvested === 0 ? 0 : (totalProfit / totalInvested) * 100
 
   return (
     <div className="page-stack">
       <section className="hero-panel">
         <div>
-          <p className="eyebrow">Design-driven starter</p>
+          <p className="eyebrow">Transaction-driven workspace</p>
           <h1>Portfolio monitoring MVP</h1>
           <p className="hero-copy">
-            This starter now reads Google Sheet values and turns them into live
-            dashboard summaries for the approved US stock monitoring flow.
+            Record buy and sell trades, then let the app rebuild current holdings and previous-close summaries from your Google Sheet.
           </p>
         </div>
         <div className="hero-aside hero-aside-stack">
@@ -47,13 +42,13 @@ export function DashboardPage() {
 
       <section className="summary-grid">
         <SummaryCard title="Portfolio Value" value={`$${totalValue.toFixed(2)}`} caption="Based on previous close" tone="neutral" />
-        <SummaryCard title="Invested Capital" value={`$${totalInvested.toFixed(2)}`} caption="Average cost basis" tone="neutral" />
+        <SummaryCard title="Invested Capital" value={`$${totalInvested.toFixed(2)}`} caption="Open-position cost basis" tone="neutral" />
         <SummaryCard title="Unrealized P/L" value={`$${totalProfit.toFixed(2)}`} caption={`${totalYield.toFixed(2)}% return`} tone={totalProfit >= 0 ? 'positive' : 'negative'} />
-        <SummaryCard title="Coverage" value={`${holdings.length + favorites.length + ideas.length}`} caption="Tracked rows across modules" tone="neutral" />
+        <SummaryCard title="Trades Loaded" value={`${snapshot.transactions.length}`} caption="Buy and sell rows in the sheet" tone="neutral" />
       </section>
 
       <div className="content-grid">
-        <SectionCard title="Core Watchlist" description="Registered US stocks pulled into the monitor sheet." actionLabel="Manage universe">
+        <SectionCard title="Core Watchlist" description="Registered US stocks pulled into the monitor sheet.">
           <div className="mini-table">
             {monitorRows.length === 0 ? (
               <div className="empty-note">No monitor rows yet. Create the template and fill the sheet.</div>
@@ -76,12 +71,12 @@ export function DashboardPage() {
           </div>
         </SectionCard>
 
-        <SectionCard title="Connection Readiness" description="Implementation status for the next integration step." actionLabel="Open settings">
+        <SectionCard title="Connection Readiness" description="Implementation status for the next integration step.">
           <ul className="check-list">
             <li>{envConfigured ? 'Google client ID configured' : 'Google client ID still needs configuration'}</li>
             <li>{session ? 'Google sign-in flow connected' : 'Google sign-in pending'}</li>
             <li>{spreadsheet ? 'Template spreadsheet connected' : 'Template spreadsheet creation pending'}</li>
-            <li>{monitorRows.length > 0 ? 'Real sheet rows loaded into the dashboard' : 'Populate sheet rows to see dashboard data'}</li>
+            <li>{snapshot.transactions.length > 0 ? 'Transaction rows loaded for derived holdings' : 'Add your first trade to activate derived holdings'}</li>
           </ul>
         </SectionCard>
       </div>

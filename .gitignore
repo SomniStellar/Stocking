@@ -1,4 +1,4 @@
-ï»¿# Logs
+# Logs
 logs
 *.log
 npm-debug.log*
@@ -10,6 +10,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+coverage
 *.local
 *.tsbuildinfo
 
@@ -21,7 +22,9 @@ dist-ssr
 
 # Local working notes
 .codex/
-ì„¤ê³„ì„œ/
+¼³°è¼­/
+/¼³°è¼­/
+/¼³°è¼­/**
 
 # Editor directories and files
 .vscode/*
