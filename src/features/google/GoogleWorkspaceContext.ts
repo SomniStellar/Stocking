@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react'
 import type { GoogleSession, SpreadsheetConnection } from '../../types/google'
-import type { TransactionDraft } from '../../types/domain'
+import type { HoldingDraft } from '../../types/domain'
 import type { SpreadsheetSnapshot } from '../../types/sheets'
 
 export interface GoogleWorkspaceContextValue {
@@ -18,7 +18,7 @@ export interface GoogleWorkspaceContextValue {
   connectSpreadsheet: (spreadsheetId: string) => Promise<void>
   createTemplateSpreadsheet: (title?: string) => Promise<void>
   refreshSpreadsheetData: () => Promise<void>
-  addTransaction: (draft: TransactionDraft) => Promise<boolean>
+  addHolding: (draft: HoldingDraft) => Promise<boolean>
   clearSpreadsheet: () => void
 }
 

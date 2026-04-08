@@ -48,9 +48,7 @@ export function SettingsPage() {
             </span>
           </div>
 
-          <p className="muted-copy">
-            Sign in first, then let the app create a Stocking template spreadsheet automatically.
-          </p>
+          <p className="muted-copy">Sign in first, then let the app create a Stocking snapshot template spreadsheet automatically.</p>
 
           <div className="button-row">
             <Link className="primary-button button-link" to="/login">
@@ -88,13 +86,7 @@ export function SettingsPage() {
           </label>
 
           <div className="button-row">
-            <button
-              className="primary-button"
-              onClick={() => {
-                void handleSpreadsheetCreate()
-              }}
-              disabled={!session || busyState !== 'idle'}
-            >
+            <button className="primary-button" onClick={() => { void handleSpreadsheetCreate() }} disabled={!session || busyState !== 'idle'}>
               {busyState === 'creating' ? 'Creating template...' : 'Create template spreadsheet'}
             </button>
             {spreadsheet ? (
@@ -124,37 +116,23 @@ export function SettingsPage() {
       <SectionCard title="Sheet Data Snapshot" description="Refresh and inspect the currently loaded Google Sheet rows.">
         <div className="stack-block">
           <div className="button-row">
-            <button
-              className="primary-button"
-              onClick={() => {
-                void handleRefresh()
-              }}
-              disabled={!spreadsheet || busyState !== 'idle'}
-            >
+            <button className="primary-button" onClick={() => { void handleRefresh() }} disabled={!spreadsheet || busyState !== 'idle'}>
               {busyState === 'syncing' ? 'Refreshing data...' : 'Refresh sheet data'}
             </button>
           </div>
 
           <div className="detail-list">
             <div>
-              <span>Stocks rows</span>
-              <strong>{snapshot.stocks.length}</strong>
-            </div>
-            <div>
               <span>Holdings rows</span>
               <strong>{snapshot.holdings.length}</strong>
             </div>
             <div>
-              <span>Favorites rows</span>
-              <strong>{snapshot.favorites.length}</strong>
+              <span>Watchlists rows</span>
+              <strong>{snapshot.watchlists.length}</strong>
             </div>
             <div>
-              <span>Ideas rows</span>
-              <strong>{snapshot.ideas.length}</strong>
-            </div>
-            <div>
-              <span>Transactions rows</span>
-              <strong>{snapshot.transactions.length}</strong>
+              <span>Cash rows</span>
+              <strong>{snapshot.cash.length}</strong>
             </div>
             <div>
               <span>Monitor rows</span>
@@ -178,33 +156,23 @@ export function SettingsPage() {
           </label>
 
           <div className="button-row">
-            <button
-              className="primary-button"
-              onClick={() => {
-                void handleSpreadsheetConnect()
-              }}
-              disabled={!session || busyState !== 'idle'}
-            >
+            <button className="primary-button" onClick={() => { void handleSpreadsheetConnect() }} disabled={!session || busyState !== 'idle'}>
               {busyState === 'spreadsheet' ? 'Checking sheet...' : 'Connect existing sheet'}
             </button>
             <button className="secondary-button" onClick={clearSpreadsheet} disabled={!storedSpreadsheetId && !spreadsheet}>
               Clear saved sheet
             </button>
           </div>
-
-          <p className="muted-copy">
-            This is optional. The recommended flow is to let Stocking create the template for you.
-          </p>
         </div>
       </SectionCard>
 
       <SectionCard title="Project Notes" description="Implementation guidance carried from the design docs.">
         <ul className="check-list">
-          <li>Phase 2 now centers on transaction input and derived holdings</li>
-          <li>US stocks only</li>
+          <li>Current holdings snapshot model</li>
+          <li>Watchlists unify favorites and ideas</li>
+          <li>Cash is included as a dedicated sheet</li>
           <li>Previous close as the price baseline</li>
           <li>No external market API</li>
-          <li>Dividend features deferred</li>
         </ul>
       </SectionCard>
 
@@ -213,9 +181,7 @@ export function SettingsPage() {
           <div className={`message-box ${errorMessage ? 'message-box-error' : 'message-box-neutral'}`}>
             {errorMessage ?? 'No runtime errors.'}
           </div>
-          <div className="message-box message-box-neutral">
-            Saved spreadsheet ID: {storedSpreadsheetId || 'None'}
-          </div>
+          <div className="message-box message-box-neutral">Saved spreadsheet ID: {storedSpreadsheetId || 'None'}</div>
         </div>
       </SectionCard>
     </div>

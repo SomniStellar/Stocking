@@ -188,7 +188,8 @@ a {
 .topbar,
 .topbar-cluster,
 .button-row,
-.status-panel {
+.status-panel,
+.section-toolbar {
   display: flex;
   gap: 12px;
   align-items: center;
@@ -201,6 +202,11 @@ a {
 
 .topbar-cluster {
   justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.section-toolbar {
+  justify-content: space-between;
   flex-wrap: wrap;
 }
 
@@ -377,6 +383,19 @@ a {
   gap: 8px;
 }
 
+.field-inline {
+  display: inline-grid;
+  gap: 8px;
+  min-width: 220px;
+}
+
+.trade-form-panel {
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
 .text-input {
   width: 100%;
   padding: 12px 14px;
@@ -525,7 +544,8 @@ a {
   .button-row,
   .hero-panel,
   .section-card-head,
-  .status-panel {
+  .status-panel,
+  .section-toolbar {
     flex-direction: column;
     align-items: stretch;
   }
@@ -540,6 +560,10 @@ a {
   .table-head,
   .mini-row {
     grid-template-columns: 1fr;
+  }
+
+  .field-inline {
+    min-width: unset;
   }
 }
 

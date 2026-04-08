@@ -1,62 +1,41 @@
-﻿export interface StocksSheetRow {
-  ticker: string
-  name: string
-  market: string
-  active: string
-  memo: string
-}
-
 export interface HoldingsSheetRow {
   ticker: string
+  name: string
   quantity: number
   avg_price: number
-  memo: string
+  tags: string
 }
 
-export interface FavoritesSheetRow {
+export interface WatchlistsSheetRow {
   ticker: string
+  name: string
+  list_type: string
   target_price: number
-  memo: string
-}
-
-export interface IdeasSheetRow {
-  portfolio_name: string
-  ticker: string
   virtual_qty: number
   virtual_entry_price: number
-  memo: string
+  tags: string
 }
 
-export interface TransactionsSheetRow {
-  date: string
-  ticker: string
-  type: string
-  quantity: number
-  price: number
-  fee: number
-  memo: string
+export interface CashSheetRow {
+  account_name: string
+  currency: string
+  amount: number
+  tags: string
 }
 
 export interface MonitorSheetRow {
   ticker: string
   full_ticker: string
   closeyest: number
-  change: number
-  changepct: number
-  high52: number
-  low52: number
-  marketcap: string
-  pe: number
-  eps: number
-  volumeavg: number
+  ytd_price: number
+  price_3y: number
+  price_5y: number
   tradetime: string
 }
 
 export interface SpreadsheetSnapshot {
-  stocks: StocksSheetRow[]
   holdings: HoldingsSheetRow[]
-  favorites: FavoritesSheetRow[]
-  ideas: IdeasSheetRow[]
-  transactions: TransactionsSheetRow[]
+  watchlists: WatchlistsSheetRow[]
+  cash: CashSheetRow[]
   monitor: MonitorSheetRow[]
 }

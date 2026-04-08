@@ -1,11 +1,11 @@
-﻿import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet } from 'react-router-dom'
 import { useGoogleWorkspace } from '../features/google/GoogleWorkspaceContext'
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/holdings', label: 'Holdings' },
-  { to: '/favorites', label: 'Favorites' },
-  { to: '/ideas', label: 'Ideas' },
+  { to: '/watchlists', label: 'Watchlists' },
+  { to: '/cash', label: 'Cash' },
   { to: '/settings', label: 'Settings' },
 ]
 
@@ -28,9 +28,7 @@ export function AppLayout() {
         <div className="brand-block">
           <p className="eyebrow">US Stock Monitor</p>
           <h1>Stocking</h1>
-          <p className="brand-copy">
-            Google Sheets and GOOGLEFINANCE based monitoring workspace.
-          </p>
+          <p className="brand-copy">Snapshot-based Google Sheets portfolio workspace.</p>
         </div>
 
         <nav className="nav-menu" aria-label="Primary">
@@ -38,9 +36,7 @@ export function AppLayout() {
             <NavLink
               key={item.to}
               to={item.to}
-              className={({ isActive }) =>
-                isActive ? 'nav-link nav-link-active' : 'nav-link'
-              }
+              className={({ isActive }) => (isActive ? 'nav-link nav-link-active' : 'nav-link')}
             >
               {item.label}
             </NavLink>
@@ -51,7 +47,7 @@ export function AppLayout() {
       <main className="main-panel">
         <header className="topbar">
           <div>
-            <p className="eyebrow">Version 0.2</p>
+            <p className="eyebrow">Version 0.3</p>
             <h2>Portfolio Workspace</h2>
           </div>
           <div className="topbar-cluster">
@@ -76,4 +72,3 @@ export function AppLayout() {
     </div>
   )
 }
-

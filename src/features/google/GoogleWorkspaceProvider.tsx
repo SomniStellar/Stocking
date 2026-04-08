@@ -1,15 +1,15 @@
 import { type PropsWithChildren, useEffect, useState } from 'react'
-import type { TransactionDraft } from '../../types/domain'
+import type { HoldingDraft } from '../../types/domain'
 import { loadGoogleIdentityScript, requestGoogleAccessToken } from '../../lib/google/googleIdentity'
 import {
-  appendTransactionRow,
+  appendHoldingRow,
   createTemplateSpreadsheet,
   fetchGoogleUserProfile,
   fetchSpreadsheetConnection,
   fetchSpreadsheetSnapshot,
   getTemplateValidationMessage,
 } from '../../lib/google/googleSheets'
-import type { GoogleSession, SpreadsheetConnection } from '../../types/google'
+import type { GoogleSession } from '../../types/google'
 import type { SpreadsheetSnapshot } from '../../types/sheets'
 import {
   GoogleWorkspaceContext,
@@ -19,18 +19,16 @@ import {
 const STORAGE_KEY = 'stocking.spreadsheetId'
 
 const EMPTY_SNAPSHOT: SpreadsheetSnapshot = {
-  stocks: [],
   holdings: [],
-  favorites: [],
-  ideas: [],
-  transactions: [],
+  watchlists: [],
+  cash: [],
   monitor: [],
 }
 
 export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
   const [clientReady, setClientReady] = useState(false)
   const [session, setSession] = useState<GoogleSession | null>(null)
-  const [spreadsheet, setSpreadsheet] = useState<SpreadsheetConnection | null>(null)
+  const [spreadsheet, setSpreadsheet] = useState<GoogleWorkspaceContextValue['spreadsheet']>(null)
   const [snapshot, setSnapshot] = useState<SpreadsheetSnapshot>(EMPTY_SNAPSHOT)
   const [storedSpreadsheetId, setStoredSpreadsheetId] = useState('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -60,11 +58,7 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
 
   async function hydrateSpreadsheet(spreadsheetId: string, accessToken: string) {
     const connection = await fetchSpreadsheetConnection(spreadsheetId, accessToken)
-    const nextSnapshot = await fetchSpreadsheetSnapshot(
-      spreadsheetId,
-      accessToken,
-      connection.sheets,
-    )
+    const nextSnapshot = await fetchSpreadsheetSnapshot(spreadsheetId, accessToken, connection.sheets)
 
     setSpreadsheet(connection)
     setSnapshot(nextSnapshot)
@@ -170,9 +164,9 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
     }
   }
 
-  async function addTransaction(draft: TransactionDraft) {
+  async function addHolding(draft: HoldingDraft) {
     if (!session?.accessToken || !spreadsheet?.id) {
-      setErrorMessage('Connect a spreadsheet before recording trades.')
+      setErrorMessage('Connect a spreadsheet before adding holdings.')
       return false
     }
 
@@ -180,14 +174,12 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
     setErrorMessage(null)
 
     try {
-      await appendTransactionRow(spreadsheet.id, session.accessToken, {
-        date: draft.date,
+      await appendHoldingRow(spreadsheet.id, session.accessToken, {
         ticker: draft.ticker.trim().toUpperCase(),
-        type: draft.type,
+        name: draft.name.trim(),
         quantity: draft.quantity,
-        price: draft.price,
-        fee: draft.fee,
-        memo: draft.memo.trim(),
+        avg_price: draft.avgPrice,
+        tags: draft.tags.trim(),
       })
 
       const nextConnection = await fetchSpreadsheetConnection(spreadsheet.id, session.accessToken)
@@ -197,7 +189,7 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
       setValidationMessage(getTemplateValidationMessage(nextConnection))
       return true
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to save transaction.'
+      const message = error instanceof Error ? error.message : 'Failed to save holding.'
       setErrorMessage(message)
       return false
     } finally {
@@ -237,13 +229,9 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
     connectSpreadsheet,
     createTemplateSpreadsheet: createTemplateSpreadsheetAndConnect,
     refreshSpreadsheetData,
-    addTransaction,
+    addHolding,
     clearSpreadsheet,
   }
 
-  return (
-    <GoogleWorkspaceContext.Provider value={value}>
-      {children}
-    </GoogleWorkspaceContext.Provider>
-  )
+  return <GoogleWorkspaceContext.Provider value={value}>{children}</GoogleWorkspaceContext.Provider>
 }
