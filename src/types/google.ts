@@ -9,6 +9,7 @@ export interface SpreadsheetConnection {
   title: string
   url: string
   sheets: string[]
+  sheetIds: Record<string, number>
   isTemplateValid: boolean
   checkedAt: string
 }

@@ -1,20 +1,18 @@
 import type { GoogleUserProfile, SpreadsheetConnection } from '../../types/google'
 import type {
-  CashSheetRow,
   HoldingsSheetRow,
   MonitorSheetRow,
   SpreadsheetSnapshot,
   WatchlistsSheetRow,
 } from '../../types/sheets'
 
-const REQUIRED_TABS = ['Holdings', 'Watchlists', 'Monitor', 'Cash'] as const
+const REQUIRED_TABS = ['Holdings', 'Watchlists', 'Monitor'] as const
 const SUPPORTED_TABS = [...REQUIRED_TABS] as const
 
 const TEMPLATE_HEADERS: Record<(typeof SUPPORTED_TABS)[number], string[]> = {
-  Holdings: ['ticker', 'name', 'quantity', 'avg_price', 'tags'],
+  Holdings: ['ticker', 'name', 'side', 'quantity', 'avg_price', 'tags'],
   Watchlists: ['ticker', 'name', 'list_type', 'target_price', 'virtual_qty', 'virtual_entry_price', 'tags'],
   Monitor: ['ticker', 'full_ticker', 'closeyest', 'ytd_price', 'price_3y', 'price_5y', 'tradetime'],
-  Cash: ['account_name', 'currency', 'amount', 'tags'],
 }
 
 function toNumber(value: unknown) {
@@ -30,7 +28,7 @@ function buildSpreadsheetUrl(id: string) {
   return `https://docs.google.com/spreadsheets/d/${id}/edit`
 }
 
-function mapRows<T>(values: string[][] | undefined, mapper: (record: Record<string, string>) => T) {
+function mapRows<T>(values: string[][] | undefined, mapper: (record: Record<string, string>, rowNumber: number) => T) {
   if (!values || values.length <= 1) {
     return [] as T[]
   }
@@ -40,14 +38,33 @@ function mapRows<T>(values: string[][] | undefined, mapper: (record: Record<stri
   const normalizedHeaders = headers.map((header) => normalizeText(header))
 
   return rows
-    .filter((row) => row.some((cell) => normalizeText(cell) !== ''))
-    .map((row) => {
+    .map((row, index) => ({ row, rowNumber: index + 2 }))
+    .filter(({ row }) => row.some((cell) => normalizeText(cell) !== ''))
+    .map(({ row, rowNumber }) => {
       const record: Record<string, string> = {}
       normalizedHeaders.forEach((header, index) => {
         record[header] = normalizeText(row[index])
       })
-      return mapper(record)
+      return mapper(record, rowNumber)
     })
+}
+
+function buildMonitorFormulaRows(tickers: string[]) {
+  return tickers.map((ticker, index) => {
+    const row = index + 2
+    const tickerRef = `A${row}`
+    const fullTickerRef = `B${row}`
+
+    return [
+      ticker,
+      `=IF(${tickerRef}="","",${tickerRef})`,
+      `=IFERROR(GOOGLEFINANCE(${fullTickerRef},"closeyest"),"")`,
+      `=IFERROR(INDEX(GOOGLEFINANCE(${fullTickerRef},"price",DATE(YEAR(TODAY()),1,1)),2,2),"")`,
+      `=IFERROR(INDEX(GOOGLEFINANCE(${fullTickerRef},"price",EDATE(TODAY(),-36)),2,2),"")`,
+      `=IFERROR(INDEX(GOOGLEFINANCE(${fullTickerRef},"price",EDATE(TODAY(),-60)),2,2),"")`,
+      `=IFERROR(TEXT(GOOGLEFINANCE(${fullTickerRef},"tradetime"),"yyyy-mm-dd hh:mm"),"")`,
+    ]
+  })
 }
 
 export async function fetchGoogleUserProfile(accessToken: string) {
@@ -64,7 +81,7 @@ export async function fetchGoogleUserProfile(accessToken: string) {
 
 export async function fetchSpreadsheetConnection(spreadsheetId: string, accessToken: string) {
   const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=spreadsheetId,spreadsheetUrl,properties(title),sheets(properties(title))`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=spreadsheetId,spreadsheetUrl,properties(title),sheets(properties(title,sheetId))`,
     {
       headers: { Authorization: `Bearer ${accessToken}` },
     },
@@ -78,13 +95,18 @@ export async function fetchSpreadsheetConnection(spreadsheetId: string, accessTo
     spreadsheetId: string
     spreadsheetUrl?: string
     properties?: { title?: string }
-    sheets?: Array<{ properties?: { title?: string } }>
+    sheets?: Array<{ properties?: { title?: string; sheetId?: number } }>
   }
 
-  const sheets = (data.sheets ?? [])
-    .map((entry) => entry.properties?.title?.trim())
-    .filter((title): title is string => Boolean(title))
+  const sheetEntries = (data.sheets ?? [])
+    .map((entry) => ({
+      title: entry.properties?.title?.trim() ?? '',
+      sheetId: entry.properties?.sheetId ?? -1,
+    }))
+    .filter((entry) => Boolean(entry.title))
 
+  const sheets = sheetEntries.map((entry) => entry.title)
+  const sheetIds = Object.fromEntries(sheetEntries.map((entry) => [entry.title, entry.sheetId]))
   const isTemplateValid = REQUIRED_TABS.every((required) => sheets.includes(required))
 
   return {
@@ -92,6 +114,7 @@ export async function fetchSpreadsheetConnection(spreadsheetId: string, accessTo
     title: data.properties?.title ?? 'Untitled spreadsheet',
     url: data.spreadsheetUrl ?? buildSpreadsheetUrl(data.spreadsheetId),
     sheets,
+    sheetIds,
     isTemplateValid,
     checkedAt: new Date().toISOString(),
   } satisfies SpreadsheetConnection
@@ -130,26 +153,23 @@ export async function fetchSpreadsheetSnapshot(spreadsheetId: string, accessToke
   }
 
   return {
-    holdings: mapRows<HoldingsSheetRow>(valueMap.get('Holdings'), (record) => ({
+    holdings: mapRows<HoldingsSheetRow>(valueMap.get('Holdings'), (record, rowNumber) => ({
+      row_number: rowNumber,
       ticker: record.ticker,
       name: record.name,
+      side: record.side === 'SELL' ? 'SELL' : 'BUY',
       quantity: toNumber(record.quantity),
       avg_price: toNumber(record.avg_price),
       tags: record.tags,
     })),
-    watchlists: mapRows<WatchlistsSheetRow>(valueMap.get('Watchlists'), (record) => ({
+    watchlists: mapRows<WatchlistsSheetRow>(valueMap.get('Watchlists'), (record, rowNumber) => ({
+      row_number: rowNumber,
       ticker: record.ticker,
       name: record.name,
       list_type: record.list_type,
       target_price: toNumber(record.target_price),
       virtual_qty: toNumber(record.virtual_qty),
       virtual_entry_price: toNumber(record.virtual_entry_price),
-      tags: record.tags,
-    })),
-    cash: mapRows<CashSheetRow>(valueMap.get('Cash'), (record) => ({
-      account_name: record.account_name,
-      currency: record.currency,
-      amount: toNumber(record.amount),
       tags: record.tags,
     })),
     monitor: mapRows<MonitorSheetRow>(valueMap.get('Monitor'), (record) => ({
@@ -188,12 +208,25 @@ export async function createTemplateSpreadsheet(title: string, accessToken: stri
   }
 
   const spreadsheetId = created.spreadsheetId
+  await rewriteTemplateHeaders(spreadsheetId, accessToken)
+  const connection = await fetchSpreadsheetConnection(spreadsheetId, accessToken)
+
+  return {
+    ...connection,
+    title: created.properties?.title ?? title,
+    url: created.spreadsheetUrl ?? buildSpreadsheetUrl(spreadsheetId),
+    isTemplateValid: true,
+    checkedAt: new Date().toISOString(),
+  } satisfies SpreadsheetConnection
+}
+
+export async function rewriteTemplateHeaders(spreadsheetId: string, accessToken: string) {
   const data = SUPPORTED_TABS.map((tab) => ({
     range: `${tab}!A1:${String.fromCharCode(64 + TEMPLATE_HEADERS[tab].length)}1`,
     values: [TEMPLATE_HEADERS[tab]],
   }))
 
-  const headersResponse = await fetch(
+  const response = await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchUpdate`,
     {
       method: 'POST',
@@ -205,23 +238,32 @@ export async function createTemplateSpreadsheet(title: string, accessToken: stri
     },
   )
 
-  if (!headersResponse.ok) {
-    throw new Error('Spreadsheet was created, but template headers could not be written.')
+  if (!response.ok) {
+    throw new Error('Failed to rewrite template headers.')
   }
-
-  return {
-    id: spreadsheetId,
-    title: created.properties?.title ?? title,
-    url: created.spreadsheetUrl ?? buildSpreadsheetUrl(spreadsheetId),
-    sheets: [...SUPPORTED_TABS],
-    isTemplateValid: true,
-    checkedAt: new Date().toISOString(),
-  } satisfies SpreadsheetConnection
 }
 
 export async function appendHoldingRow(spreadsheetId: string, accessToken: string, row: HoldingsSheetRow) {
   const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent('Holdings!A:E')}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent('Holdings!A:F')}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ values: [[row.ticker, row.name, row.side, row.quantity, row.avg_price, row.tags]] }),
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to append holding row.')
+  }
+}
+
+export async function appendWatchlistRow(spreadsheetId: string, accessToken: string, row: WatchlistsSheetRow) {
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent('Watchlists!A:G')}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
     {
       method: 'POST',
       headers: {
@@ -229,13 +271,108 @@ export async function appendHoldingRow(spreadsheetId: string, accessToken: strin
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        values: [[row.ticker, row.name, row.quantity, row.avg_price, row.tags]],
+        values: [[row.ticker, row.name, row.list_type, row.target_price, row.virtual_qty, row.virtual_entry_price, row.tags]],
       }),
     },
   )
 
   if (!response.ok) {
-    throw new Error('Failed to append holding row.')
+    throw new Error('Failed to append watchlist row.')
+  }
+}
+
+export async function deleteSheetRows(spreadsheetId: string, accessToken: string, sheetId: number, rowNumbers: number[]) {
+  const uniqueRows = [...new Set(rowNumbers)].sort((left, right) => right - left)
+  if (uniqueRows.length === 0) {
+    return
+  }
+
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        requests: uniqueRows.map((rowNumber) => ({
+          deleteDimension: {
+            range: {
+              sheetId,
+              dimension: 'ROWS',
+              startIndex: rowNumber - 1,
+              endIndex: rowNumber,
+            },
+          },
+        })),
+      }),
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to delete sheet rows.')
+  }
+}
+
+export async function resetSpreadsheetRows(spreadsheetId: string, accessToken: string) {
+  await rewriteTemplateHeaders(spreadsheetId, accessToken)
+
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchClear`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ranges: ['Holdings!A2:F', 'Watchlists!A2:G', 'Monitor!A2:G'],
+      }),
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to reset spreadsheet rows.')
+  }
+}
+
+export async function syncMonitorSheet(spreadsheetId: string, accessToken: string, tickers: string[]) {
+  const uniqueTickers = [...new Set(tickers.map((ticker) => ticker.trim().toUpperCase()).filter(Boolean))]
+
+  const clearResponse = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent('Monitor!A2:G')}:clear`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    },
+  )
+
+  if (!clearResponse.ok) {
+    throw new Error('Failed to clear existing monitor rows.')
+  }
+
+  if (uniqueTickers.length === 0) {
+    return
+  }
+
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(`Monitor!A2:G${uniqueTickers.length + 1}`)}?valueInputOption=USER_ENTERED`,
+    {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ values: buildMonitorFormulaRows(uniqueTickers) }),
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to sync monitor rows.')
   }
 }
 

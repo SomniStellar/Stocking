@@ -1,6 +1,6 @@
-import { SectionCard } from '../components/SectionCard'
+﻿import { SectionCard } from '../components/SectionCard'
 import { SummaryCard } from '../components/SummaryCard'
-import { buildCashRows, buildHoldingRows, buildMonitorRows, buildWatchlistRows } from '../data/sheetData'
+import { buildHoldingRows, buildMonitorRows, buildWatchlistRows } from '../data/sheetData'
 import { useGoogleWorkspace } from '../features/google/GoogleWorkspaceContext'
 
 export function DashboardPage() {
@@ -8,14 +8,11 @@ export function DashboardPage() {
   const monitorRows = buildMonitorRows(snapshot)
   const holdings = buildHoldingRows(snapshot)
   const watchlists = buildWatchlistRows(snapshot)
-  const cashRows = buildCashRows(snapshot)
 
   const totalInvested = holdings.reduce((sum, item) => sum + item.invested, 0)
   const totalValue = holdings.reduce((sum, item) => sum + item.marketValue, 0)
   const totalProfit = holdings.reduce((sum, item) => sum + item.unrealizedProfit, 0)
   const totalYield = totalInvested === 0 ? 0 : (totalProfit / totalInvested) * 100
-  const totalCash = cashRows.reduce((sum, item) => sum + item.amount, 0)
-  const totalPortfolio = totalValue + totalCash
 
   return (
     <div className="page-stack">
@@ -24,7 +21,7 @@ export function DashboardPage() {
           <p className="eyebrow">Snapshot-driven workspace</p>
           <h1>Portfolio monitoring MVP</h1>
           <p className="hero-copy">
-            Track current holdings, watchlists, and cash with Google Sheets as the single portfolio snapshot source.
+            Track current holdings and watchlists with Google Sheets as the single portfolio snapshot source.
           </p>
         </div>
         <div className="hero-aside hero-aside-stack">
@@ -37,9 +34,9 @@ export function DashboardPage() {
 
       <section className="summary-grid">
         <SummaryCard title="Holdings Value" value={`$${totalValue.toFixed(2)}`} caption="Based on previous close" tone="neutral" />
-        <SummaryCard title="Cash" value={`$${totalCash.toFixed(2)}`} caption="Cash rows loaded from sheet" tone="neutral" />
-        <SummaryCard title="Portfolio Total" value={`$${totalPortfolio.toFixed(2)}`} caption="Holdings plus cash" tone="neutral" />
+        <SummaryCard title="Invested Cost" value={`$${totalInvested.toFixed(2)}`} caption="Current holdings snapshot" tone="neutral" />
         <SummaryCard title="Unrealized P/L" value={`$${totalProfit.toFixed(2)}`} caption={`${totalYield.toFixed(2)}% return`} tone={totalProfit >= 0 ? 'positive' : 'negative'} />
+        <SummaryCard title="Watchlists" value={`${watchlists.length}`} caption="Favorites and ideas" tone="neutral" />
       </section>
 
       <div className="content-grid">
@@ -69,7 +66,6 @@ export function DashboardPage() {
         <SectionCard title="Watchlist Coverage" description="Favorites and ideas are unified in the Watchlists sheet.">
           <ul className="check-list">
             <li>{watchlists.length} watchlist rows loaded</li>
-            <li>{cashRows.length} cash rows loaded</li>
             <li>{monitorRows.length} monitor rows loaded</li>
             <li>{spreadsheet ? 'Template spreadsheet connected' : 'Template spreadsheet creation pending'}</li>
           </ul>

@@ -1,1 +1,0 @@
-export { CashPage as IdeasPage } from './CashPage'

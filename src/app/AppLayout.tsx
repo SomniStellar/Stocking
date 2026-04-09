@@ -1,11 +1,10 @@
-import { NavLink, Outlet } from 'react-router-dom'
+﻿import { NavLink, Outlet } from 'react-router-dom'
 import { useGoogleWorkspace } from '../features/google/GoogleWorkspaceContext'
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/holdings', label: 'Holdings' },
   { to: '/watchlists', label: 'Watchlists' },
-  { to: '/cash', label: 'Cash' },
   { to: '/settings', label: 'Settings' },
 ]
 

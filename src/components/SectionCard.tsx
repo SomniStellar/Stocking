@@ -3,14 +3,12 @@
 interface SectionCardProps {
   title: string
   description: string
-  actionLabel?: string
   children: ReactNode
 }
 
 export function SectionCard({
   title,
   description,
-  actionLabel,
   children,
 }: SectionCardProps) {
   return (
@@ -20,7 +18,6 @@ export function SectionCard({
           <h3>{title}</h3>
           <p>{description}</p>
         </div>
-        {actionLabel ? <button className="ghost-button">{actionLabel}</button> : null}
       </div>
       <div>{children}</div>
     </section>

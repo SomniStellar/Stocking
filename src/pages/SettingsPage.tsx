@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+﻿import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import { SectionCard } from '../components/SectionCard'
 import { useGoogleWorkspace } from '../features/google/GoogleWorkspaceContext'
@@ -14,6 +14,7 @@ export function SettingsPage() {
     errorMessage,
     logout,
     refreshSpreadsheetData,
+    resetSpreadsheetData,
     session,
     snapshot,
     spreadsheet,
@@ -33,6 +34,10 @@ export function SettingsPage() {
 
   async function handleRefresh() {
     await refreshSpreadsheetData()
+  }
+
+  async function handleReset() {
+    await resetSpreadsheetData()
   }
 
   return (
@@ -113,12 +118,19 @@ export function SettingsPage() {
         </div>
       </SectionCard>
 
-      <SectionCard title="Sheet Data Snapshot" description="Refresh and inspect the currently loaded Google Sheet rows.">
+      <SectionCard title="Sheet Data Snapshot" description="Refresh, reset, and inspect the currently loaded Google Sheet rows.">
         <div className="stack-block">
           <div className="button-row">
             <button className="primary-button" onClick={() => { void handleRefresh() }} disabled={!spreadsheet || busyState !== 'idle'}>
               {busyState === 'syncing' ? 'Refreshing data...' : 'Refresh sheet data'}
             </button>
+            <button className="secondary-button" onClick={() => { void handleReset() }} disabled={!spreadsheet || busyState !== 'idle'}>
+              {busyState === 'writing' ? 'Resetting sheet...' : 'Reset sheet rows'}
+            </button>
+          </div>
+
+          <div className="message-box message-box-neutral">
+            Reset clears Holdings, Watchlists, and Monitor rows but keeps the sheet, tabs, and headers.
           </div>
 
           <div className="detail-list">
@@ -129,10 +141,6 @@ export function SettingsPage() {
             <div>
               <span>Watchlists rows</span>
               <strong>{snapshot.watchlists.length}</strong>
-            </div>
-            <div>
-              <span>Cash rows</span>
-              <strong>{snapshot.cash.length}</strong>
             </div>
             <div>
               <span>Monitor rows</span>
@@ -168,9 +176,9 @@ export function SettingsPage() {
 
       <SectionCard title="Project Notes" description="Implementation guidance carried from the design docs.">
         <ul className="check-list">
-          <li>Current holdings snapshot model</li>
+          <li>Holdings support BUY and SELL rows</li>
           <li>Watchlists unify favorites and ideas</li>
-          <li>Cash is included as a dedicated sheet</li>
+          <li>Monitor is auto-synced from current tickers</li>
           <li>Previous close as the price baseline</li>
           <li>No external market API</li>
         </ul>

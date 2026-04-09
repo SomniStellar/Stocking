@@ -1,25 +1,21 @@
-export interface HoldingsSheetRow {
+﻿export interface HoldingsSheetRow {
+  row_number: number
   ticker: string
   name: string
+  side: 'BUY' | 'SELL'
   quantity: number
   avg_price: number
   tags: string
 }
 
 export interface WatchlistsSheetRow {
+  row_number: number
   ticker: string
   name: string
   list_type: string
   target_price: number
   virtual_qty: number
   virtual_entry_price: number
-  tags: string
-}
-
-export interface CashSheetRow {
-  account_name: string
-  currency: string
-  amount: number
   tags: string
 }
 
@@ -36,6 +32,5 @@ export interface MonitorSheetRow {
 export interface SpreadsheetSnapshot {
   holdings: HoldingsSheetRow[]
   watchlists: WatchlistsSheetRow[]
-  cash: CashSheetRow[]
   monitor: MonitorSheetRow[]
 }

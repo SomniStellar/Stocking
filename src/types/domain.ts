@@ -1,4 +1,4 @@
-export interface StockMonitorRow {
+﻿export interface StockMonitorRow {
   ticker: string
   closeyest: number
   ytdPrice: number
@@ -20,9 +20,11 @@ export interface HoldingRow {
   return3Y: number
   return5Y: number
   tags: string
+  sourceRowNumbers: number[]
 }
 
 export interface WatchlistRow {
+  rowNumber: number
   ticker: string
   name: string
   listType: string
@@ -33,17 +35,21 @@ export interface WatchlistRow {
   tags: string
 }
 
-export interface CashRow {
-  accountName: string
-  currency: string
-  amount: number
-  tags: string
-}
-
 export interface HoldingDraft {
   ticker: string
   name: string
+  side: 'BUY' | 'SELL'
   quantity: number
   avgPrice: number
+  tags: string
+}
+
+export interface WatchlistDraft {
+  ticker: string
+  name: string
+  listType: 'FAVORITE' | 'IDEA'
+  targetPrice: number
+  virtualQty: number
+  virtualEntryPrice: number
   tags: string
 }
