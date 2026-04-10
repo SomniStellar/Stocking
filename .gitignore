@@ -22,9 +22,9 @@ coverage
 
 # Local working notes
 .codex/
-설계서/
-/설계서/
-/설계서/**
+.docs/
+/.docs/
+/.docs/**
 
 # Editor directories and files
 .vscode/*
@@ -36,3 +36,7 @@ coverage
 *.njsproj
 *.sln
 *.sw?
+# Local preview artifacts
+.tmp/
+playwright-report/
+test-results/

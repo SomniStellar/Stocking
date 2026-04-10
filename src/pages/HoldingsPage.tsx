@@ -1,7 +1,21 @@
-import { type FormEvent, useEffect, useMemo, useState } from 'react'
+import { type DragEvent, type FormEvent, useEffect, useMemo, useState } from 'react'
 import { SectionCard } from '../components/SectionCard'
 import { buildHoldingRows } from '../data/sheetData'
 import { useGoogleWorkspace } from '../features/google/GoogleWorkspaceContext'
+import { AddIcon, CloseIcon, DeleteIcon, EditIcon, ResetIcon } from '../features/holdings/holdingIcons'
+import {
+  buildReorderedTickerList,
+  getHoldingDropPlacement,
+  sortHoldingsByDisplayOrder,
+  type HoldingDropPlacement,
+} from '../features/holdings/holdingOrder'
+import {
+  buildHoldingDraft,
+  formatCurrency,
+  formatPercent,
+  formatQuantity,
+  normalizeTags,
+} from '../features/holdings/holdingUtils'
 import { getTagOptions, matchesTagFilter, parseTags } from '../lib/tags'
 import type { HoldingDraft, HoldingRow } from '../types/domain'
 
@@ -14,116 +28,57 @@ const INITIAL_DRAFT: HoldingDraft = {
   tags: '',
 }
 
-type HoldingSortKey = 'value' | 'ticker' | 'quantity' | 'profit' | 'return'
 type CostInputMode = 'avg' | 'total'
-
-function formatCurrency(value: number) {
-  return `$${value.toFixed(2)}`
-}
-
-function formatPercent(value: number) {
-  return `${value.toFixed(2)}%`
-}
-
-function formatQuantity(value: number) {
-  const fixed = value.toFixed(6)
-  return fixed.replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1')
-}
-
-function normalizeTags(value: string) {
-  return parseTags(value).sort((left, right) => left.localeCompare(right)).join(', ')
-}
-
-function sortHoldings(rows: HoldingRow[], sortKey: HoldingSortKey) {
-  const sorted = [...rows]
-
-  switch (sortKey) {
-    case 'ticker':
-      return sorted.sort((left, right) => left.ticker.localeCompare(right.ticker))
-    case 'quantity':
-      return sorted.sort((left, right) => right.quantity - left.quantity)
-    case 'profit':
-      return sorted.sort((left, right) => right.unrealizedProfit - left.unrealizedProfit)
-    case 'return':
-      return sorted.sort((left, right) => right.unrealizedReturn - left.unrealizedReturn)
-    case 'value':
-    default:
-      return sorted.sort((left, right) => right.marketValue - left.marketValue)
-  }
-}
-
-function buildHoldingDraft(row: HoldingRow): HoldingDraft {
-  return {
-    ticker: row.ticker,
-    name: row.ticker,
-    side: 'BUY',
-    quantity: row.quantity,
-    avgPrice: row.avgPrice,
-    tags: row.tags,
-  }
-}
-
-function EditIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M4 20h4l10-10-4-4L4 16v4Z" fill="currentColor" />
-      <path d="m14 6 4 4 2-2-4-4-2 2Z" fill="currentColor" />
-    </svg>
-  )
-}
-
-function DeleteIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M8 4h8l1 2h4v2H3V6h4l1-2Z" fill="currentColor" />
-      <path d="M6 9h12l-1 11H7L6 9Z" fill="currentColor" />
-    </svg>
-  )
-}
-
-function AddIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7V4Z" fill="currentColor" />
-    </svg>
-  )
-}
-
-function ResetIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 5a7 7 0 1 1-6.58 9.4l1.9-.63A5 5 0 1 0 8.5 8.5H12V6H5v7h2V9.77A7 7 0 0 1 12 5Z" fill="currentColor" />
-    </svg>
-  )
-}
-
-function CloseIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="m6 6 12 12M18 6 6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  )
-}
+type DragTargetState = {
+  ticker: string
+  placement: HoldingDropPlacement
+} | null
 
 export function HoldingsPage() {
-  const { addHolding, busyState, deleteHolding, errorMessage, snapshot, spreadsheet, updateHolding } = useGoogleWorkspace()
+  const {
+    addHolding,
+    busyState,
+    deleteHolding,
+    errorMessage,
+    reorderHoldings,
+    snapshot,
+    spreadsheet,
+    updateHolding,
+  } = useGoogleWorkspace()
   const holdings = buildHoldingRows(snapshot)
   const [draft, setDraft] = useState<HoldingDraft>(INITIAL_DRAFT)
   const [formMessage, setFormMessage] = useState<string | null>(null)
   const [showHoldingForm, setShowHoldingForm] = useState(false)
-  const [sortKey, setSortKey] = useState<HoldingSortKey>('value')
   const [activeTag, setActiveTag] = useState('all')
   const [costInputMode, setCostInputMode] = useState<CostInputMode>('avg')
   const [costInput, setCostInput] = useState(0)
   const [editingTicker, setEditingTicker] = useState<string | null>(null)
   const [highlightedTicker, setHighlightedTicker] = useState<string | null>(null)
+  const [draggingTicker, setDraggingTicker] = useState<string | null>(null)
+  const [dragTarget, setDragTarget] = useState<DragTargetState>(null)
+  const [orderedTickerOverride, setOrderedTickerOverride] = useState<string[] | null>(null)
 
   const tagOptions = useMemo(() => getTagOptions(holdings.map((item) => item.tags)), [holdings])
+
+  const orderedHoldings = useMemo(() => {
+    const base = sortHoldingsByDisplayOrder(holdings)
+
+    if (!orderedTickerOverride) {
+      return base
+    }
+
+    const orderMap = new Map(orderedTickerOverride.map((ticker, index) => [ticker, index]))
+    return [...base].sort((left, right) => {
+      const leftIndex = orderMap.get(left.ticker) ?? Number.MAX_SAFE_INTEGER
+      const rightIndex = orderMap.get(right.ticker) ?? Number.MAX_SAFE_INTEGER
+      return leftIndex - rightIndex
+    })
+  }, [holdings, orderedTickerOverride])
+
   const filteredHoldings = useMemo(
-    () => holdings.filter((item) => matchesTagFilter(item.tags, activeTag)),
-    [activeTag, holdings],
+    () => orderedHoldings.filter((item) => matchesTagFilter(item.tags, activeTag)),
+    [activeTag, orderedHoldings],
   )
-  const sortedHoldings = useMemo(() => sortHoldings(filteredHoldings, sortKey), [filteredHoldings, sortKey])
 
   const summary = useMemo(() => {
     const positions = filteredHoldings.length
@@ -139,7 +94,10 @@ export function HoldingsPage() {
     return { positions, marketValue, invested, unrealized, unrealizedReturn, ytd, threeYear, fiveYear }
   }, [filteredHoldings])
 
-  const previewTags = parseTags(draft.tags).sort((left, right) => left.localeCompare(right))
+  const previewTags = useMemo(
+    () => parseTags(draft.tags).sort((left, right) => left.localeCompare(right)),
+    [draft.tags],
+  )
 
   useEffect(() => {
     if (!highlightedTicker) {
@@ -237,7 +195,7 @@ export function HoldingsPage() {
       return
     }
 
-    setFormMessage(editingTicker ? `${normalizedTicker} holding was updated.` : `${draft.side} row saved to the Holdings sheet.`)
+    setFormMessage(editingTicker ? `${normalizedTicker} updated.` : `${draft.side} saved.`)
     setHighlightedTicker(normalizedTicker)
 
     if (editingTicker) {
@@ -251,8 +209,68 @@ export function HoldingsPage() {
     setFormMessage(null)
     const deleted = await deleteHolding(ticker)
     if (deleted) {
-      setFormMessage(`${ticker} rows were removed from the Holdings sheet.`)
+      setFormMessage(`${ticker} removed.`)
     }
+  }
+
+  function clearDragState() {
+    setDraggingTicker(null)
+    setDragTarget(null)
+  }
+
+  function handleDragStart(event: DragEvent<HTMLElement>, ticker: string) {
+    if (busyState !== 'idle') {
+      event.preventDefault()
+      return
+    }
+
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', ticker)
+    setDraggingTicker(ticker)
+    setDragTarget({ ticker, placement: 'before' })
+    setFormMessage(null)
+  }
+
+  function handleDragOver(event: DragEvent<HTMLElement>, ticker: string) {
+    if (!draggingTicker || draggingTicker === ticker) {
+      return
+    }
+
+    event.preventDefault()
+    event.dataTransfer.dropEffect = 'move'
+
+    const placement = getHoldingDropPlacement(event.clientY, event.currentTarget.getBoundingClientRect())
+    setDragTarget((current) => (
+      current?.ticker === ticker && current.placement === placement
+        ? current
+        : { ticker, placement }
+    ))
+  }
+
+  async function handleDrop(targetTicker: string, placement: HoldingDropPlacement) {
+    if (!draggingTicker) {
+      return
+    }
+
+    const allTickers = orderedHoldings.map((item) => item.ticker)
+    const visibleTickers = filteredHoldings.map((item) => item.ticker)
+    const nextTickers = buildReorderedTickerList(allTickers, visibleTickers, draggingTicker, targetTicker, placement)
+
+    clearDragState()
+
+    if (nextTickers.every((ticker, index) => ticker === allTickers[index])) {
+      return
+    }
+
+    setOrderedTickerOverride(nextTickers)
+    const saved = await reorderHoldings(nextTickers)
+
+    if (saved) {
+      setFormMessage(activeTag === 'all' ? 'Order updated.' : 'Filtered order updated.')
+      return
+    }
+
+    setOrderedTickerOverride(null)
   }
 
   function renderEditorCard(mode: 'create' | 'edit', itemKey?: string) {
@@ -289,12 +307,18 @@ export function HoldingsPage() {
           </div>
 
           <div className="metric-card metric-card-input">
-            <div className="field-label-inline field-label-inline-clickable" onClick={toggleCostMode} role="button" tabIndex={0} onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault()
-                toggleCostMode()
-              }
-            }}>
+            <div
+              className="field-label-inline field-label-inline-clickable"
+              onClick={toggleCostMode}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  toggleCostMode()
+                }
+              }}
+            >
               <span>{costInputMode === 'avg' ? 'Average Price' : 'Total Price'}</span>
             </div>
             <input
@@ -319,7 +343,7 @@ export function HoldingsPage() {
             </button>
           </div>
 
-          <div className="metric-card metric-card-input">
+          <div className="metric-card metric-card-input metric-card-quantity">
             <span>Quantity</span>
             <input
               id={`${mode}-holding-quantity`}
@@ -333,7 +357,7 @@ export function HoldingsPage() {
             />
           </div>
 
-          <div className="metric-card metric-card-input">
+          <div className="metric-card metric-card-input metric-card-value">
             <span>Tags</span>
             <input
               id={`${mode}-holding-tags`}
@@ -344,7 +368,7 @@ export function HoldingsPage() {
             />
           </div>
 
-          <div className="metric-card metric-card-actions">
+          <div className="metric-card metric-card-actions metric-card-period-list">
             <span>{isEditing ? 'Edit' : 'Create'}</span>
             <button className="primary-button" type="submit" disabled={!spreadsheet || busyState !== 'idle'}>
               {busyState === 'writing' ? 'Saving...' : 'Save'}
@@ -357,16 +381,43 @@ export function HoldingsPage() {
 
   function renderHoldingCard(item: HoldingRow) {
     const sortedTags = parseTags(item.tags).sort((left, right) => left.localeCompare(right))
+    const isDragging = draggingTicker === item.ticker
+    const isDropTarget = dragTarget?.ticker === item.ticker && draggingTicker !== item.ticker
+    const dropPlacement = isDropTarget ? dragTarget?.placement : null
 
     return (
-      <article key={`${item.ticker}-${item.name}`} className={`entity-card${highlightedTicker === item.ticker ? ' entity-card-highlight' : ''}`} data-item-id={item.ticker}>
+      <article
+        key={`${item.ticker}-${item.name}`}
+        className={[
+          'entity-card',
+          'entity-card-draggable',
+          highlightedTicker === item.ticker ? 'entity-card-highlight' : '',
+          isDragging ? 'entity-card-dragging' : '',
+          isDropTarget ? 'entity-card-drop-target' : '',
+          dropPlacement === 'before' ? 'entity-card-drop-before' : '',
+          dropPlacement === 'after' ? 'entity-card-drop-after' : '',
+        ].filter(Boolean).join(' ')}
+        data-item-id={item.ticker}
+        draggable={busyState === 'idle'}
+        onDragStart={(event) => handleDragStart(event, item.ticker)}
+        onDragOver={(event) => handleDragOver(event, item.ticker)}
+        onDrop={(event) => {
+          event.preventDefault()
+          const placement = dragTarget?.ticker === item.ticker ? dragTarget.placement : 'before'
+          void handleDrop(item.ticker, placement)
+        }}
+        onDragEnd={clearDragState}
+      >
+        <span className="drag-insert-guide drag-insert-guide-before" aria-hidden="true" />
+        <span className="drag-insert-guide drag-insert-guide-after" aria-hidden="true" />
         <div className="entity-card-topline">
-          <div className="tag-chip-row">
+          <div className="tag-chip-row tag-chip-row-tight">
             {sortedTags.map((tag) => (
               <span key={tag} className="tag-chip">{tag}</span>
             ))}
           </div>
           <div className="card-icon-actions">
+            <span className="drag-handle" aria-hidden="true">::</span>
             <button className="icon-button" type="button" onClick={() => openEditForm(item)} disabled={busyState !== 'idle'} aria-label={`Edit ${item.ticker}`}>
               <EditIcon />
             </button>
@@ -376,17 +427,17 @@ export function HoldingsPage() {
           </div>
         </div>
 
-        <div className="metric-grid holdings-metric-grid">
+        <div className="metric-grid holdings-metric-grid holdings-card-grid">
           <div className="metric-card metric-card-ticker-display">
             <strong>{item.name || item.ticker}</strong>
             <small>{item.ticker}</small>
           </div>
-          <div className="metric-card">
-            <span>Price / Avg</span>
+          <div className="metric-card metric-card-price">
+            <span className="metric-label-split">Price <span className="metric-label-break">/ Avg</span></span>
             <strong>{formatCurrency(item.closeyest)}</strong>
             <small>{formatCurrency(item.avgPrice)}</small>
           </div>
-          <div className="metric-card">
+          <div className="metric-card metric-card-profit">
             <span>P/L</span>
             <strong className={item.unrealizedProfit >= 0 ? 'text-positive' : 'text-negative'}>
               {formatCurrency(item.unrealizedProfit)}
@@ -395,12 +446,12 @@ export function HoldingsPage() {
               {formatPercent(item.unrealizedReturn)}
             </small>
           </div>
-          <div className="metric-card">
+          <div className="metric-card metric-card-quantity">
             <span>Quantity</span>
             <strong>{formatQuantity(item.quantity)}</strong>
           </div>
-          <div className="metric-card">
-            <span>Value / Invested</span>
+          <div className="metric-card metric-card-value">
+            <span className="metric-label-split">Value <span className="metric-label-break">/ Invested</span></span>
             <strong>{formatCurrency(item.marketValue)}</strong>
             <small>{formatCurrency(item.invested)}</small>
           </div>
@@ -417,30 +468,30 @@ export function HoldingsPage() {
   function renderSummaryCard() {
     return (
       <article className="entity-card entity-card-summary" data-item-id="portfolio-summary">
-        <div className="entity-card-topline">
-          <div className="tag-chip-row">
-            <span className="tag-chip tag-chip-total">Total</span>
-          </div>
+        <div className="entity-card-topline entity-card-topline-summary">
+          <strong className="summary-card-title">Portfolio</strong>
+          <span className="tag-chip tag-chip-total">Total</span>
         </div>
 
-        <div className="metric-grid holdings-metric-grid">
+        <div className="metric-grid holdings-metric-grid holdings-summary-grid">
           <div className="metric-card metric-card-ticker-display">
             <strong>Portfolio</strong>
+            <small>Total</small>
           </div>
-          <div className="metric-card">
+          <div className="metric-card metric-card-price">
             <span>Value</span>
             <strong>{formatCurrency(summary.marketValue)}</strong>
           </div>
-          <div className="metric-card">
+          <div className="metric-card metric-card-profit">
             <span>P/L</span>
             <strong className={summary.unrealized >= 0 ? 'text-positive' : 'text-negative'}>{formatCurrency(summary.unrealized)}</strong>
             <small className={summary.unrealizedReturn >= 0 ? 'text-positive' : 'text-negative'}>{formatPercent(summary.unrealizedReturn)}</small>
           </div>
-          <div className="metric-card">
+          <div className="metric-card metric-card-quantity">
             <span>Holdings</span>
             <strong>{summary.positions}</strong>
           </div>
-          <div className="metric-card">
+          <div className="metric-card metric-card-value">
             <span>Invested</span>
             <strong>{formatCurrency(summary.invested)}</strong>
           </div>
@@ -456,12 +507,19 @@ export function HoldingsPage() {
 
   function renderAddSlotCard() {
     return (
-      <article className="entity-card entity-card-add-slot" data-item-id="holding-add-slot" onClick={openCreateForm} role="button" tabIndex={0} onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault()
-          openCreateForm()
-        }
-      }}>
+      <article
+        className="entity-card entity-card-add-slot"
+        data-item-id="holding-add-slot"
+        onClick={openCreateForm}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            openCreateForm()
+          }
+        }}
+      >
         <AddIcon />
       </article>
     )
@@ -471,54 +529,42 @@ export function HoldingsPage() {
     <div className="page-stack">
       <SectionCard
         title="Holdings"
-        description="Current portfolio snapshot rows. BUY rows add to the position, SELL rows reduce it."
+        description="Manual order with tag filtering."
+        actions={(
+          <label className="field-inline field-inline-compact" htmlFor="holding-tag-filter">
+            <span>Tag</span>
+            <select id="holding-tag-filter" className="text-input" value={activeTag} onChange={(event) => setActiveTag(event.target.value)}>
+              <option value="all">All</option>
+              {tagOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       >
         <div className="stack-block">
-          <div className="section-toolbar">
-            <label className="field-inline" htmlFor="holding-sort">
-              <span>Sort</span>
-              <select id="holding-sort" className="text-input" value={sortKey} onChange={(event) => setSortKey(event.target.value as HoldingSortKey)}>
-                <option value="value">Value</option>
-                <option value="profit">P/L</option>
-                <option value="return">Return</option>
-                <option value="quantity">Quantity</option>
-                <option value="ticker">Ticker</option>
-              </select>
-            </label>
-
-            <label className="field-inline" htmlFor="holding-tag-filter">
-              <span>Tag</span>
-              <select id="holding-tag-filter" className="text-input" value={activeTag} onChange={(event) => setActiveTag(event.target.value)}>
-                <option value="all">All</option>
-                {tagOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
           {!spreadsheet && (showHoldingForm || editingTicker) ? (
             <div className="message-box message-box-neutral">
-              Create or connect a spreadsheet in Settings before saving holdings.
+              Connect a spreadsheet before saving holdings.
             </div>
           ) : null}
 
-          <div className="entity-card-grid entity-card-grid-holdings">
+          <div className={`entity-card-grid entity-card-grid-holdings${draggingTicker ? ' entity-card-grid-drag-active' : ''}`}>
             {renderSummaryCard()}
             {showHoldingForm ? renderEditorCard('create') : renderAddSlotCard()}
-            {sortedHoldings.map((item) => (
+            {filteredHoldings.map((item) => (
               editingTicker === item.ticker ? renderEditorCard('edit', item.ticker) : renderHoldingCard(item)
             ))}
           </div>
 
-          {sortedHoldings.length === 0 && !showHoldingForm ? (
-            <div className="empty-note">No active holdings yet. Use the add slot to create one.</div>
+          {filteredHoldings.length === 0 && !showHoldingForm ? (
+            <div className="empty-note">No holdings yet.</div>
           ) : null}
 
           <div className={`message-box ${errorMessage ? 'message-box-error' : 'message-box-neutral'}`}>
-            {errorMessage ?? formMessage ?? 'Ticker is required. Google Finance name autofill is not available in the current setup, so ticker is stored as the name.'}
+            {errorMessage ?? formMessage ?? 'Drag cards to reorder.'}
           </div>
         </div>
       </SectionCard>

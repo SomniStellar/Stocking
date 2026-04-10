@@ -1,4 +1,4 @@
-﻿import { type PropsWithChildren, useEffect, useState } from 'react'
+import { type PropsWithChildren, useEffect, useState } from 'react'
 import type { HoldingDraft, WatchlistDraft } from '../../types/domain'
 import { loadGoogleIdentityScript, requestGoogleAccessToken } from '../../lib/google/googleIdentity'
 import {
@@ -10,7 +10,9 @@ import {
   fetchSpreadsheetConnection,
   fetchSpreadsheetSnapshot,
   getTemplateValidationMessage,
+  overwriteHoldingRows,
   resetSpreadsheetRows,
+  rewriteTemplateHeaders,
   syncMonitorSheet,
 } from '../../lib/google/googleSheets'
 import type { GoogleSession } from '../../types/google'
@@ -27,6 +29,32 @@ const EMPTY_SNAPSHOT: SpreadsheetSnapshot = {
   watchlists: [],
   monitor: [],
 }
+
+const PREVIEW_HOLDINGS_SNAPSHOT: SpreadsheetSnapshot = {
+  holdings: [
+    { row_number: 2, ticker: 'AAPL', name: 'Apple', side: 'BUY', quantity: 12, avg_price: 186.25, tags: 'core, tech', display_order: 1 },
+    { row_number: 3, ticker: 'MSFT', name: 'Microsoft', side: 'BUY', quantity: 8, avg_price: 412.1, tags: 'core, ai', display_order: 2 },
+    { row_number: 4, ticker: 'TSLA', name: 'Tesla', side: 'BUY', quantity: 5, avg_price: 224.6, tags: 'growth', display_order: 3 },
+    { row_number: 5, ticker: 'NVDA', name: 'NVIDIA', side: 'BUY', quantity: 6, avg_price: 781.45, tags: 'ai, semis', display_order: 4 },
+  ],
+  watchlists: [],
+  monitor: [
+    { ticker: 'AAPL', full_ticker: 'NASDAQ:AAPL', closeyest: 211.42, ytd_price: 192.33, price_3y: 148.72, price_5y: 122.5, tradetime: '2026-04-10 09:00' },
+    { ticker: 'MSFT', full_ticker: 'NASDAQ:MSFT', closeyest: 468.55, ytd_price: 438.21, price_3y: 312.44, price_5y: 246.11, tradetime: '2026-04-10 09:00' },
+    { ticker: 'TSLA', full_ticker: 'NASDAQ:TSLA', closeyest: 201.18, ytd_price: 228.4, price_3y: 179.22, price_5y: 151.85, tradetime: '2026-04-10 09:00' },
+    { ticker: 'NVDA', full_ticker: 'NASDAQ:NVDA', closeyest: 924.36, ytd_price: 801.2, price_3y: 461.15, price_5y: 217.7, tradetime: '2026-04-10 09:00' },
+  ],
+}
+
+const PREVIEW_SPREADSHEET = {
+  id: 'dev-preview-holdings',
+  title: '[Dev/Test] Holdings Layout Preview',
+  url: 'https://example.invalid/dev-preview-holdings',
+  sheets: ['Holdings', 'Watchlists', 'Monitor'],
+  sheetIds: { Holdings: 0, Watchlists: 1, Monitor: 2 },
+  isTemplateValid: true,
+  checkedAt: new Date('2026-04-10T00:00:00.000Z').toISOString(),
+} satisfies GoogleWorkspaceContextValue['spreadsheet']
 
 function collectMonitorTickers(snapshot: SpreadsheetSnapshot) {
   return [...new Set([
@@ -51,6 +79,28 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     const savedSpreadsheetId = window.localStorage.getItem(STORAGE_KEY) ?? ''
     setStoredSpreadsheetId(savedSpreadsheetId)
+  }, [])
+
+  useEffect(() => {
+    const isPreviewHoldings = import.meta.env.DEV && new URLSearchParams(window.location.search).get('preview') === 'holdings'
+
+    if (!isPreviewHoldings) {
+      return
+    }
+
+    setSession({
+      accessToken: 'dev-preview-token',
+      profile: {
+        email: 'preview@stocking.local',
+        name: '[Dev/Test] Holdings Preview',
+      },
+    })
+    setSpreadsheet(PREVIEW_SPREADSHEET)
+    setSnapshot(PREVIEW_HOLDINGS_SNAPSHOT)
+    setStoredSpreadsheetId('')
+    setValidationMessage('[Dev/Test] Holdings preview data is active.')
+    setErrorMessage('[Dev/Test] Preview mode bypasses live Google Sheets and renders sample data for layout review.')
+    setClientReady(true)
   }, [])
 
   useEffect(() => {
@@ -95,6 +145,11 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
 
   async function hydrateSpreadsheet(spreadsheetId: string, accessToken: string, options?: { syncMonitor?: boolean }) {
     const connection = await fetchSpreadsheetConnection(spreadsheetId, accessToken)
+
+    if (connection.isTemplateValid) {
+      await rewriteTemplateHeaders(spreadsheetId, accessToken)
+    }
+
     let nextSnapshot = await fetchSpreadsheetSnapshot(spreadsheetId, accessToken, connection.sheets)
 
     if (options?.syncMonitor) {
@@ -238,6 +293,7 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
     try {
       const normalizedTicker = draft.ticker.trim().toUpperCase()
       const normalizedName = draft.name.trim() || normalizedTicker
+      const nextDisplayOrder = snapshot.holdings.reduce((maxOrder, row) => Math.max(maxOrder, Number(row.display_order) || 0), 0) + 1
 
       await appendHoldingRow(spreadsheet.id, session.accessToken, {
         row_number: 0,
@@ -247,6 +303,7 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
         quantity: draft.quantity,
         avg_price: draft.avgPrice,
         tags: draft.tags.trim(),
+        display_order: nextDisplayOrder,
       })
 
       await hydrateSpreadsheet(spreadsheet.id, session.accessToken, { syncMonitor: true })
@@ -266,7 +323,7 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
       return false
     }
 
-    const targetRows = snapshot.holdings.filter((row) => row.ticker === ticker).map((row) => row.row_number)
+    const targetRows = snapshot.holdings.filter((row) => row.ticker === ticker)
     if (targetRows.length === 0) {
       setErrorMessage('No matching holding rows were found.')
       return false
@@ -276,9 +333,12 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
     setErrorMessage(null)
 
     try {
-      await deleteSheetRows(spreadsheet.id, session.accessToken, spreadsheet.sheetIds.Holdings, targetRows)
+      await deleteSheetRows(spreadsheet.id, session.accessToken, spreadsheet.sheetIds.Holdings, targetRows.map((row) => row.row_number))
       const normalizedTicker = draft.ticker.trim().toUpperCase()
       const normalizedName = draft.name.trim() || normalizedTicker
+      const preservedDisplayOrder = targetRows
+        .map((row) => Number(row.display_order) || 0)
+        .find((value) => value > 0) ?? 1
       await appendHoldingRow(spreadsheet.id, session.accessToken, {
         row_number: 0,
         ticker: normalizedTicker,
@@ -287,6 +347,7 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
         quantity: draft.quantity,
         avg_price: draft.avgPrice,
         tags: draft.tags.trim(),
+        display_order: preservedDisplayOrder,
       })
       await hydrateSpreadsheet(spreadsheet.id, session.accessToken, { syncMonitor: true })
       return true
@@ -320,6 +381,56 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
       return true
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to delete holding rows.'
+      setErrorMessage(message)
+      return false
+    } finally {
+      setBusyState('idle')
+    }
+  }
+
+  async function reorderHoldings(tickers: string[]) {
+    if (!session?.accessToken || !spreadsheet?.id) {
+      setErrorMessage('Connect a spreadsheet before reordering holdings.')
+      return false
+    }
+
+    const normalizedTickers = [...new Set(tickers.map((ticker) => ticker.trim().toUpperCase()).filter(Boolean))]
+    const knownTickers = [...new Set(snapshot.holdings.map((row) => row.ticker.trim().toUpperCase()).filter(Boolean))]
+
+    if (normalizedTickers.length !== knownTickers.length) {
+      setErrorMessage('Holding order could not be saved because the visible order was incomplete.')
+      return false
+    }
+
+    const nextOrderMap = new Map(normalizedTickers.map((ticker, index) => [ticker, index + 1]))
+
+    setBusyState('writing')
+    setErrorMessage(null)
+
+    try {
+      const nextRows = [...snapshot.holdings]
+        .map((row) => {
+          const normalizedTicker = row.ticker.trim().toUpperCase()
+          return {
+            ...row,
+            ticker: normalizedTicker,
+            name: row.name.trim() || normalizedTicker,
+            display_order: nextOrderMap.get(normalizedTicker) ?? normalizedTickers.length + 1,
+          }
+        })
+        .sort((left, right) => {
+          if (left.display_order !== right.display_order) {
+            return left.display_order - right.display_order
+          }
+
+          return left.row_number - right.row_number
+        })
+
+      await overwriteHoldingRows(spreadsheet.id, session.accessToken, nextRows)
+      await hydrateSpreadsheet(spreadsheet.id, session.accessToken, { syncMonitor: true })
+      return true
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to save holding order.'
       setErrorMessage(message)
       return false
     } finally {
@@ -454,6 +565,7 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
     addHolding,
     updateHolding,
     deleteHolding,
+    reorderHoldings,
     addWatchlist,
     updateWatchlist,
     deleteWatchlist,

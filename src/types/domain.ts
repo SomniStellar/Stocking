@@ -1,4 +1,4 @@
-﻿export interface StockMonitorRow {
+export interface StockMonitorRow {
   ticker: string
   closeyest: number
   ytdPrice: number
@@ -20,6 +20,7 @@ export interface HoldingRow {
   return3Y: number
   return5Y: number
   tags: string
+  displayOrder: number
   sourceRowNumbers: number[]
 }
 

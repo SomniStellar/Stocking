@@ -1,4 +1,4 @@
-﻿import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet } from 'react-router-dom'
 import { useGoogleWorkspace } from '../features/google/GoogleWorkspaceContext'
 
 const navItems = [
@@ -11,15 +11,40 @@ const navItems = [
 export function AppLayout() {
   const { session, spreadsheet, clientReady, envConfigured } = useGoogleWorkspace()
 
-  const statusText = !envConfigured
-    ? 'Google client ID missing'
+  const workspaceStatus = !envConfigured
+    ? {
+        label: 'AUTH',
+        title: '[Dev/Test] Client ID missing',
+        detail: 'Configure Google sign-in',
+      }
     : session
       ? spreadsheet
-        ? `Connected to ${spreadsheet.title}`
-        : 'Signed in, spreadsheet pending'
+        ? {
+            label: 'SHEET',
+            title: 'Sheet connected',
+            detail: spreadsheet.title,
+          }
+        : {
+            label: 'SHEET',
+            title: 'Sheet pending',
+            detail: 'Signed in, connect a spreadsheet',
+          }
       : clientReady
-        ? 'Ready for Google sign-in'
-        : 'Preparing Google Identity'
+        ? {
+            label: 'AUTH',
+            title: 'Google ready',
+            detail: 'Sign-in available',
+          }
+        : {
+            label: 'AUTH',
+            title: 'Preparing sign-in',
+            detail: 'Loading Google Identity',
+          }
+
+  const accountTitle = session
+    ? `${session.profile.name} (${session.profile.email})`
+    : ''
+  const statusTitle = `${workspaceStatus.title} (${workspaceStatus.detail})`
 
   return (
     <div className="app-shell">
@@ -51,17 +76,18 @@ export function AppLayout() {
           </div>
           <div className="topbar-cluster">
             {session ? (
-              <div className="profile-chip">
-                <span className="status-dot" />
-                <div>
+              <div className="profile-chip" title={accountTitle}>
+                <span className="chip-badge">ACC</span>
+                <div className="chip-copy">
                   <strong>{session.profile.name}</strong>
-                  <span>{session.profile.email}</span>
                 </div>
               </div>
             ) : null}
-            <div className="topbar-card">
-              <span className="status-dot" />
-              {statusText}
+            <div className="topbar-card" title={statusTitle}>
+              <span className="chip-badge">{workspaceStatus.label}</span>
+              <div className="chip-copy">
+                <strong>{workspaceStatus.title}</strong>
+              </div>
             </div>
           </div>
         </header>

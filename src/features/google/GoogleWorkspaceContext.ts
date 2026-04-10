@@ -1,4 +1,4 @@
-﻿import { createContext, useContext } from 'react'
+import { createContext, useContext } from 'react'
 import type { HoldingDraft, WatchlistDraft } from '../../types/domain'
 import type { GoogleSession, SpreadsheetConnection } from '../../types/google'
 import type { SpreadsheetSnapshot } from '../../types/sheets'
@@ -22,6 +22,7 @@ export interface GoogleWorkspaceContextValue {
   addHolding: (draft: HoldingDraft) => Promise<boolean>
   updateHolding: (ticker: string, draft: HoldingDraft) => Promise<boolean>
   deleteHolding: (ticker: string) => Promise<boolean>
+  reorderHoldings: (tickers: string[]) => Promise<boolean>
   addWatchlist: (draft: WatchlistDraft) => Promise<boolean>
   updateWatchlist: (rowNumber: number, draft: WatchlistDraft) => Promise<boolean>
   deleteWatchlist: (rowNumber: number) => Promise<boolean>

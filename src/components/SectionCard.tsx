@@ -1,14 +1,16 @@
-﻿import type { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 
 interface SectionCardProps {
   title: string
   description: string
+  actions?: ReactNode
   children: ReactNode
 }
 
 export function SectionCard({
   title,
   description,
+  actions,
   children,
 }: SectionCardProps) {
   return (
@@ -18,6 +20,7 @@ export function SectionCard({
           <h3>{title}</h3>
           <p>{description}</p>
         </div>
+        {actions ? <div className="section-card-actions">{actions}</div> : null}
       </div>
       <div>{children}</div>
     </section>

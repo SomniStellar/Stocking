@@ -10,7 +10,7 @@ const REQUIRED_TABS = ['Holdings', 'Watchlists', 'Monitor'] as const
 const SUPPORTED_TABS = [...REQUIRED_TABS] as const
 
 const TEMPLATE_HEADERS: Record<(typeof SUPPORTED_TABS)[number], string[]> = {
-  Holdings: ['ticker', 'name', 'side', 'quantity', 'avg_price', 'tags'],
+  Holdings: ['ticker', 'name', 'side', 'quantity', 'avg_price', 'tags', 'display_order'],
   Watchlists: ['ticker', 'name', 'list_type', 'target_price', 'virtual_qty', 'virtual_entry_price', 'tags'],
   Monitor: ['ticker', 'full_ticker', 'closeyest', 'ytd_price', 'price_3y', 'price_5y', 'tradetime'],
 }
@@ -57,7 +57,7 @@ function buildMonitorFormulaRows(tickers: string[]) {
 
     return [
       ticker,
-      `=IF(${tickerRef}="","",${tickerRef})`,
+      `=IF(${tickerRef}="", "", ${tickerRef})`,
       `=IFERROR(GOOGLEFINANCE(${fullTickerRef},"closeyest"),"")`,
       `=IFERROR(INDEX(GOOGLEFINANCE(${fullTickerRef},"price",DATE(YEAR(TODAY()),1,1)),2,2),"")`,
       `=IFERROR(INDEX(GOOGLEFINANCE(${fullTickerRef},"price",EDATE(TODAY(),-36)),2,2),"")`,
@@ -65,6 +65,18 @@ function buildMonitorFormulaRows(tickers: string[]) {
       `=IFERROR(TEXT(GOOGLEFINANCE(${fullTickerRef},"tradetime"),"yyyy-mm-dd hh:mm"),"")`,
     ]
   })
+}
+
+function buildHoldingSheetValues(rows: HoldingsSheetRow[]) {
+  return rows.map((row) => [
+    row.ticker,
+    row.name,
+    row.side,
+    row.quantity,
+    row.avg_price,
+    row.tags,
+    row.display_order,
+  ])
 }
 
 export async function fetchGoogleUserProfile(accessToken: string) {
@@ -161,6 +173,7 @@ export async function fetchSpreadsheetSnapshot(spreadsheetId: string, accessToke
       quantity: toNumber(record.quantity),
       avg_price: toNumber(record.avg_price),
       tags: record.tags,
+      display_order: toNumber(record.display_order),
     })),
     watchlists: mapRows<WatchlistsSheetRow>(valueMap.get('Watchlists'), (record, rowNumber) => ({
       row_number: rowNumber,
@@ -245,19 +258,58 @@ export async function rewriteTemplateHeaders(spreadsheetId: string, accessToken:
 
 export async function appendHoldingRow(spreadsheetId: string, accessToken: string, row: HoldingsSheetRow) {
   const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent('Holdings!A:F')}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent('Holdings!A:G')}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
     {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ values: [[row.ticker, row.name, row.side, row.quantity, row.avg_price, row.tags]] }),
+      body: JSON.stringify({ values: buildHoldingSheetValues([row]) }),
     },
   )
 
   if (!response.ok) {
     throw new Error('Failed to append holding row.')
+  }
+}
+
+export async function overwriteHoldingRows(spreadsheetId: string, accessToken: string, rows: HoldingsSheetRow[]) {
+  await rewriteTemplateHeaders(spreadsheetId, accessToken)
+
+  const clearResponse = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent('Holdings!A2:G')}:clear`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    },
+  )
+
+  if (!clearResponse.ok) {
+    throw new Error('Failed to clear existing holding rows.')
+  }
+
+  if (rows.length === 0) {
+    return
+  }
+
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(`Holdings!A2:G${rows.length + 1}`)}?valueInputOption=USER_ENTERED`,
+    {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ values: buildHoldingSheetValues(rows) }),
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to rewrite holding rows.')
   }
 }
 
@@ -327,7 +379,7 @@ export async function resetSpreadsheetRows(spreadsheetId: string, accessToken: s
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        ranges: ['Holdings!A2:F', 'Watchlists!A2:G', 'Monitor!A2:G'],
+        ranges: ['Holdings!A2:G', 'Watchlists!A2:G', 'Monitor!A2:G'],
       }),
     },
   )

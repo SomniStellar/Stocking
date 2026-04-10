@@ -54,6 +54,12 @@ a {
   padding: 28px;
 }
 
+.auth-shell-simple {
+  grid-template-columns: minmax(320px, 480px);
+  justify-content: center;
+  align-content: center;
+}
+
 .auth-hero,
 .auth-panel,
 .page-error-card {
@@ -125,25 +131,23 @@ a {
   border-radius: 32px;
 }
 
+.auth-panel-simple {
+  width: min(480px, 100%);
+}
+
 .auth-panel-head {
   display: grid;
   gap: 8px;
+  text-align: center;
+}
+
+.auth-panel-head .muted-copy {
+  margin: 0;
 }
 
 .auth-button {
   width: 100%;
   justify-content: center;
-}
-
-.auth-footer {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  color: rgba(245, 239, 226, 0.72);
-}
-
-.inline-link {
-  color: #ffd28a;
 }
 
 .page-error-shell {
@@ -358,7 +362,7 @@ a {
 }
 
 .section-card {
-  padding: 22px;
+  padding: 20px;
   border-radius: 26px;
 }
 
@@ -367,7 +371,16 @@ a {
   justify-content: space-between;
   gap: 16px;
   align-items: start;
-  margin-bottom: 18px;
+  margin-bottom: 8px;
+}
+
+.section-card-head p {
+  margin: 2px 0 0;
+}
+
+.section-card-actions {
+  display: flex;
+  align-items: center;
 }
 
 .primary-button,
@@ -409,15 +422,24 @@ a {
 }
 
 .icon-button {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   padding: 0;
-  border-radius: 12px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(255, 246, 229, 0.84);
+  box-shadow: none;
+}
+
+.icon-button:hover {
+  background: rgba(255, 184, 111, 0.12);
+  border-color: rgba(255, 184, 111, 0.22);
 }
 
 .icon-button svg {
-  width: 18px;
-  height: 18px;
+  width: 15px;
+  height: 15px;
 }
 
 .button-link {
@@ -432,7 +454,7 @@ a {
 .holding-input-grid,
 .entity-card-add-copy {
   display: grid;
-  gap: 16px;
+  gap: 14px;
 }
 
 .field-block {
@@ -443,7 +465,11 @@ a {
 .field-inline {
   display: inline-grid;
   gap: 8px;
-  min-width: 220px;
+  min-width: 170px;
+}
+
+.field-inline-compact {
+  min-width: 160px;
 }
 
 .trade-form-panel {
@@ -460,7 +486,26 @@ a {
 }
 
 .entity-card-add-slot {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  justify-items: center;
+  min-height: 248px;
   border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.025);
+  color: rgba(255, 246, 229, 0.76);
+  transition: 180ms ease;
+}
+
+.entity-card-add-slot:hover {
+  border-color: rgba(255, 184, 111, 0.24);
+  background: rgba(255, 184, 111, 0.04);
+}
+
+.entity-card-add-slot svg {
+  width: 28px;
+  height: 28px;
 }
 
 .entity-card-highlight {
@@ -473,6 +518,15 @@ a {
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.04);
+  color: #fff6e5;
+}
+
+select.text-input {
+  color-scheme: dark;
+}
+
+.text-input option {
+  background: #141b24;
   color: #fff6e5;
 }
 
@@ -497,6 +551,11 @@ a {
   color: rgba(245, 239, 226, 0.75);
 }
 
+.tag-chip-total {
+  background: rgba(89, 168, 255, 0.18);
+  color: #8dc6ff;
+}
+
 .detail-list {
   display: grid;
   gap: 12px;
@@ -518,19 +577,52 @@ a {
 }
 
 .metric-card-ticker-input,
-.metric-card-ticker-display {
+.metric-card-ticker-display,
+.metric-card-price,
+.metric-card-profit,
+.metric-card-quantity,
+.metric-card-value {
   align-content: center;
 }
 
-.metric-card-ticker-display strong {
+.metric-card-ticker-display strong,
+.summary-card-title {
   font-size: 1.18rem;
 }
 
 .holding-input-grid,
 .metric-grid,
 .holdings-metric-grid {
-  grid-template-columns: minmax(130px, 1.15fr) minmax(150px, 1fr) minmax(140px, 0.95fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
+
+.holdings-card-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-areas:
+    'ticker price profit'
+    'quantity value period';
+}
+
+.holdings-card-grid .metric-card-ticker-display { grid-area: ticker; }
+.holdings-card-grid .metric-card-price { grid-area: price; }
+.holdings-card-grid .metric-card-profit { grid-area: profit; }
+.holdings-card-grid .metric-card-quantity { grid-area: quantity; }
+.holdings-card-grid .metric-card-value { grid-area: value; }
+.holdings-card-grid .metric-card-period-list { grid-area: period; }
+
+.holdings-summary-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-areas:
+    'label value profit'
+    'holdings invested period';
+}
+
+.holdings-summary-grid .metric-card-ticker-display { grid-area: label; }
+.holdings-summary-grid .metric-card-price { grid-area: value; }
+.holdings-summary-grid .metric-card-profit { grid-area: profit; }
+.holdings-summary-grid .metric-card-quantity { grid-area: holdings; }
+.holdings-summary-grid .metric-card-value { grid-area: invested; }
+.holdings-summary-grid .metric-card-period-list { grid-area: period; }
 
 .metric-card strong {
   font-size: 1.05rem;
@@ -556,19 +648,132 @@ a {
 
 .entity-card-grid {
   display: grid;
-  gap: 16px;
+  gap: 14px;
 }
 
 .entity-card-grid-holdings {
-  grid-template-columns: repeat(2, minmax(340px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+.entity-card-grid-holdings > .entity-card {
+  height: 100%;
+}
+
+.entity-card-grid-drag-active .entity-card-draggable:not(.entity-card-dragging) {
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
 }
 
 .entity-card {
   min-width: 0;
+  width: 100%;
   max-width: 100%;
   padding: 18px;
   border-radius: 24px;
   align-content: start;
+}
+
+.entity-card.entity-card-add-slot {
+  align-content: center;
+  justify-content: center;
+  place-content: center;
+  padding: 0;
+  gap: 0;
+}
+
+.entity-card-summary {
+  border-color: rgba(89, 168, 255, 0.22);
+  background:
+    linear-gradient(180deg, rgba(89, 168, 255, 0.12), rgba(13, 17, 24, 0.8)),
+    rgba(13, 17, 24, 0.72);
+  box-shadow:
+    inset 0 1px 0 rgba(141, 198, 255, 0.1),
+    0 24px 80px rgba(0, 0, 0, 0.24);
+}
+
+.entity-card-topline-summary {
+  margin-bottom: 2px;
+}
+
+.entity-card-draggable {
+  position: relative;
+  cursor: grab;
+  user-select: none;
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
+}
+
+.entity-card-draggable:hover {
+  border-color: rgba(255, 184, 111, 0.2);
+}
+
+.entity-card-dragging {
+  opacity: 0.48;
+  cursor: grabbing;
+  transform: scale(0.98) rotate(-0.4deg);
+  border-color: rgba(255, 184, 111, 0.3);
+  background: rgba(255, 184, 111, 0.06);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.26);
+}
+
+.entity-card-drop-target {
+  border-color: rgba(255, 184, 111, 0.34);
+  background: rgba(255, 184, 111, 0.06);
+  box-shadow: 0 18px 52px rgba(0, 0, 0, 0.26);
+}
+
+.entity-card-drop-before {
+  transform: translateY(8px);
+}
+
+.entity-card-drop-after {
+  transform: translateY(-8px);
+}
+
+.drag-insert-guide {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255, 210, 138, 0.2), rgba(255, 210, 138, 0.96), rgba(255, 210, 138, 0.2));
+  opacity: 0;
+  transform: scaleX(0.72);
+  transition: opacity 140ms ease, transform 140ms ease;
+  pointer-events: none;
+}
+
+.drag-insert-guide::after {
+  content: '';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #ffd28a;
+  transform: translateY(-50%);
+  box-shadow: 0 0 18px rgba(255, 210, 138, 0.6);
+}
+
+.drag-insert-guide-before {
+  top: -9px;
+}
+
+.drag-insert-guide-after {
+  bottom: -9px;
+}
+
+.entity-card-drop-before .drag-insert-guide-before,
+.entity-card-drop-after .drag-insert-guide-after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.drag-handle {
+  letter-spacing: -0.08em;
+  font-weight: 700;
+  color: rgba(255, 246, 229, 0.45);
+  cursor: grab;
 }
 
 .card-actions-inline,
@@ -585,6 +790,10 @@ a {
 .side-toggle-group,
 .card-icon-actions {
   flex-wrap: wrap;
+}
+
+.tag-chip-row {
+  min-width: 0;
 }
 
 .field-label-inline-clickable {
@@ -608,7 +817,7 @@ a {
 }
 
 .message-box {
-  padding: 14px 16px;
+  padding: 12px 14px;
   border-radius: 18px;
 }
 
@@ -677,7 +886,7 @@ a {
 }
 
 .empty-note {
-  padding: 16px;
+  padding: 14px 16px;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.04);
   color: rgba(245, 239, 226, 0.72);
@@ -687,11 +896,25 @@ a {
   .entity-card-grid-holdings {
     grid-template-columns: 1fr;
   }
+
+  .entity-card-add-slot {
+    min-height: 56px;
+    padding: 10px 16px;
+  }
+
+  .entity-card-add-slot svg {
+    width: 18px;
+    height: 18px;
+  }
 }
 
 @media (max-width: 1100px) {
   .auth-shell {
     grid-template-columns: 1fr;
+  }
+
+  .auth-shell-simple {
+    grid-template-columns: minmax(0, 480px);
   }
 
   .app-shell {
@@ -714,32 +937,102 @@ a {
   .auth-shell,
   .main-panel,
   .sidebar {
-    padding: 20px;
+    padding: 18px;
+  }
+
+  .sidebar {
+    display: grid;
+    gap: 14px;
+  }
+
+  .brand-block {
+    margin-bottom: 0;
+  }
+
+  .brand-copy {
+    display: none;
+  }
+
+  .nav-menu {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .nav-link {
+    padding: 10px 12px;
   }
 
   .topbar,
-  .topbar-cluster,
   .button-row,
   .hero-panel,
   .section-card-head,
   .status-panel,
   .section-toolbar,
-  .tag-chip-row,
   .side-toggle-group,
   .field-label-inline,
-  .entity-card-topline {
+  .entity-card-topline,
+  .section-card-actions {
     flex-direction: column;
     align-items: stretch;
   }
 
+  .topbar {
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  .topbar-cluster {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .profile-chip,
+  .topbar-card {
+    width: 100%;
+    min-width: 0;
+    padding: 10px 12px;
+    border-radius: 16px;
+  }
+
+  .section-card {
+    padding: 18px;
+  }
+
+  .section-card-head {
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .tag-chip-row {
+    align-items: center;
+    flex-direction: row;
+  }
+
   .holding-input-grid,
   .metric-grid,
-  .holdings-metric-grid {
+  .holdings-metric-grid,
+  .holdings-card-grid,
+  .holdings-summary-grid {
     grid-template-columns: repeat(3, minmax(110px, 1fr));
   }
 
-  .field-inline {
+  .holdings-card-grid,
+  .holdings-summary-grid {
+    grid-template-areas: none;
+  }
+
+  .holdings-card-grid > .metric-card,
+  .holdings-summary-grid > .metric-card {
+    grid-area: auto;
+  }
+
+  .field-inline,
+  .field-inline-compact {
     min-width: unset;
+    width: 100%;
   }
 }
 
@@ -749,8 +1042,14 @@ a {
   .settings-grid,
   .holding-input-grid,
   .metric-grid,
-  .holdings-metric-grid {
+  .holdings-metric-grid,
+  .holdings-card-grid,
+  .holdings-summary-grid {
     grid-template-columns: 1fr;
+  }
+
+  .section-card-actions {
+    width: 100%;
   }
 }
 
@@ -767,4 +1066,138 @@ a {
     transform: translateY(0) scale(1);
     box-shadow: 0 24px 80px rgba(0, 0, 0, 0.24);
   }
+}
+
+.chip-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(83, 199, 142, 0.16);
+  color: #9af0bf;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  flex: 0 0 auto;
+}
+
+.chip-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.chip-copy strong,
+.chip-detail {
+  display: block;
+}
+
+.chip-detail {
+  color: rgba(245, 239, 226, 0.72);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 720px) {
+  .profile-chip,
+  .topbar-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .chip-badge {
+    min-width: 30px;
+    height: 30px;
+    padding: 0 8px;
+    font-size: 0.66rem;
+  }
+
+  .chip-copy strong {
+    font-size: 0.94rem;
+    line-height: 1.25;
+  }
+}
+
+@media (max-width: 560px) {
+  .chip-detail {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .holdings-card-grid .metric-card:not(.metric-card-ticker-display):not(.metric-card-period-list),
+  .holdings-summary-grid .metric-card:not(.metric-card-ticker-display):not(.metric-card-period-list) {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'label value'
+      '. detail';
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 2px;
+    padding: 12px 14px;
+  }
+
+  .holdings-card-grid .metric-card:not(.metric-card-ticker-display):not(.metric-card-period-list) > span,
+  .holdings-summary-grid .metric-card:not(.metric-card-ticker-display):not(.metric-card-period-list) > span {
+    grid-area: label;
+    margin: 0;
+  }
+
+  .holdings-card-grid .metric-card:not(.metric-card-ticker-display):not(.metric-card-period-list) > strong,
+  .holdings-summary-grid .metric-card:not(.metric-card-ticker-display):not(.metric-card-period-list) > strong {
+    grid-area: value;
+    justify-self: end;
+    text-align: right;
+  }
+
+  .holdings-card-grid .metric-card:not(.metric-card-ticker-display):not(.metric-card-period-list) > small,
+  .holdings-summary-grid .metric-card:not(.metric-card-ticker-display):not(.metric-card-period-list) > small {
+    grid-area: detail;
+    justify-self: end;
+    text-align: right;
+  }
+
+  .holdings-card-grid .metric-card-ticker-display,
+  .holdings-summary-grid .metric-card-ticker-display {
+    gap: 2px;
+    padding-bottom: 14px;
+  }
+
+  .holdings-card-grid .metric-card-period-list,
+  .holdings-summary-grid .metric-card-period-list {
+    gap: 8px;
+  }
+}
+
+.metric-label-split {
+  display: inline;
+}
+
+.metric-label-break {
+  display: inline;
+}
+
+@media (max-width: 560px) {
+  .metric-label-split {
+    display: inline-grid;
+    gap: 0;
+  }
+
+  .metric-label-break {
+    display: block;
+  }
+}
+
+.profile-chip,
+.topbar-card {
+  align-items: center;
+}
+
+.chip-badge,
+.chip-copy {
+  align-self: center;
 }

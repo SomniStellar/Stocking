@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   HoldingRow,
   StockMonitorRow,
   WatchlistRow,
@@ -55,6 +55,12 @@ export function buildHoldingRows(snapshot: SpreadsheetSnapshot): HoldingRow[] {
       const return3Y = price3Y === 0 ? 0 : ((closeyest - price3Y) / price3Y) * 100
       const return5Y = price5Y === 0 ? 0 : ((closeyest - price5Y) / price5Y) * 100
       const mergedTags = [...new Set(rows.flatMap((row) => String(row.tags ?? '').split(',').map((tag) => tag.trim()).filter(Boolean)))].join(', ')
+      const explicitOrder = rows
+        .map((row) => toNumber(row.display_order))
+        .filter((value) => value > 0)
+      const displayOrder = explicitOrder.length > 0
+        ? Math.min(...explicitOrder)
+        : Math.min(...rows.map((row) => row.row_number))
 
       return {
         ticker,
@@ -70,6 +76,7 @@ export function buildHoldingRows(snapshot: SpreadsheetSnapshot): HoldingRow[] {
         return3Y,
         return5Y,
         tags: mergedTags,
+        displayOrder,
         sourceRowNumbers: rows.map((row) => row.row_number),
       }
     })

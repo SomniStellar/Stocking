@@ -1,4 +1,4 @@
-﻿export interface HoldingsSheetRow {
+export interface HoldingsSheetRow {
   row_number: number
   ticker: string
   name: string
@@ -6,6 +6,7 @@
   quantity: number
   avg_price: number
   tags: string
+  display_order: number
 }
 
 export interface WatchlistsSheetRow {
