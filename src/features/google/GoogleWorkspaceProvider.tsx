@@ -1,5 +1,5 @@
-import { type PropsWithChildren, useEffect, useState } from 'react'
-import type { HoldingDraft, WatchlistDraft } from '../../types/domain'
+﻿import { type PropsWithChildren, useEffect, useState } from 'react'
+import type { BenchmarkDraft, HoldingDraft, WatchlistDraft } from '../../types/domain'
 import { loadGoogleIdentityScript, requestGoogleAccessToken } from '../../lib/google/googleIdentity'
 import {
   appendHoldingRow,
@@ -10,6 +10,7 @@ import {
   fetchSpreadsheetConnection,
   fetchSpreadsheetSnapshot,
   getTemplateValidationMessage,
+  overwriteBenchmarkRows,
   overwriteHoldingRows,
   resetSpreadsheetRows,
   rewriteTemplateHeaders,
@@ -96,8 +97,9 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
   }, [])
 
   useEffect(() => {
-    const previewMode = import.meta.env.DEV ? new URLSearchParams(window.location.search).get('preview') : null
-    const isPreviewWorkspace = previewMode === 'holdings' || previewMode === 'dashboard'
+    const previewMode = new URLSearchParams(window.location.search).get('preview')
+    const isLocalPreviewHost = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
+    const isPreviewWorkspace = isLocalPreviewHost && (previewMode === 'holdings' || previewMode === 'dashboard' || previewMode === 'settings' || previewMode === 'watchlists')
 
     if (!isPreviewWorkspace) {
       return
@@ -453,6 +455,65 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
     }
   }
 
+  async function saveBenchmarks(drafts: BenchmarkDraft[]) {
+    if (!session?.accessToken || !spreadsheet?.id) {
+      setErrorMessage('Connect a spreadsheet before saving benchmarks.')
+      return false
+    }
+
+    if (!spreadsheet.sheets.includes('Benchmarks')) {
+      setErrorMessage('Connected spreadsheet is missing the Benchmarks tab.')
+      return false
+    }
+
+    setBusyState('writing')
+    setErrorMessage(null)
+
+    try {
+      const currentRowsByKey = new Map(snapshot.benchmarks.map((row) => [row.benchmark_key.trim().toUpperCase(), row]))
+      const nextRows = drafts.map((draft) => {
+        const benchmarkKey = draft.benchmarkKey.trim().toUpperCase()
+        const tickerPrimary = draft.tickerPrimary.trim().toUpperCase()
+        const tickerFallback = draft.tickerFallback.trim().toUpperCase()
+        const currentRow = currentRowsByKey.get(benchmarkKey)
+        const shouldResetResolution = !currentRow
+          || currentRow.ticker_primary.trim().toUpperCase() !== tickerPrimary
+          || currentRow.ticker_fallback.trim().toUpperCase() !== tickerFallback
+
+        return {
+          benchmark_key: benchmarkKey,
+          ticker_primary: tickerPrimary,
+          ticker_fallback: tickerFallback,
+          resolved_ticker: shouldResetResolution
+            ? tickerPrimary
+            : currentRow.resolved_ticker.trim().toUpperCase() || tickerPrimary,
+          resolved_source: shouldResetResolution
+            ? 'primary' as const
+            : currentRow.resolved_source,
+          status: shouldResetResolution
+            ? 'ready' as const
+            : currentRow.status,
+          market: draft.market.trim().toUpperCase() || 'US',
+          name: draft.name.trim() || benchmarkKey,
+          category: draft.category.trim() || 'INDEX',
+          is_default: draft.isDefault,
+          is_enabled: draft.isEnabled,
+          display_order: draft.displayOrder,
+          retry_count: shouldResetResolution ? 0 : currentRow.retry_count,
+        }
+      })
+
+      await overwriteBenchmarkRows(spreadsheet.id, session.accessToken, nextRows, spreadsheet.sheets)
+      await hydrateSpreadsheet(spreadsheet.id, session.accessToken, { syncMonitor: true })
+      return true
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to save benchmarks.'
+      setErrorMessage(message)
+      return false
+    } finally {
+      setBusyState('idle')
+    }
+  }
   async function addWatchlist(draft: WatchlistDraft) {
     if (!session?.accessToken || !spreadsheet?.id) {
       setErrorMessage('Connect a spreadsheet before adding watchlists.')
@@ -584,11 +645,18 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
     addWatchlist,
     updateWatchlist,
     deleteWatchlist,
+    saveBenchmarks,
     clearSpreadsheet,
   }
 
   return <GoogleWorkspaceContext.Provider value={value}>{children}</GoogleWorkspaceContext.Provider>
 }
+
+
+
+
+
+
 
 
 

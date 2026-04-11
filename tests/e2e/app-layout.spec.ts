@@ -13,6 +13,11 @@ async function openDashboardPreview(page: import('@playwright/test').Page) {
   await expect(page.getByRole('heading', { name: 'Benchmark Comparison' })).toBeVisible()
 }
 
+async function openSettingsPreview(page: import('@playwright/test').Page) {
+  await page.goto('/?preview=settings#/settings')
+  await expect(page.getByRole('heading', { name: 'Benchmark Targets' })).toBeVisible()
+}
+
 test.describe('Stocking app smoke', () => {
   test('login page renders the centered auth panel', async ({ page }) => {
     await page.goto('/#/login')
@@ -29,6 +34,11 @@ test.describe('Stocking app smoke', () => {
   test('dashboard preview renders benchmark comparison cards', async ({ page }) => {
     await openDashboardPreview(page)
     await expect(page.getByText('S&P 500')).toBeVisible()
+  })
+
+  test('settings preview renders benchmark management', async ({ page }) => {
+    await openSettingsPreview(page)
+    await expect(page.getByRole('button', { name: 'Add custom benchmark' })).toBeVisible()
   })
 
   test('holdings preview desktop capture', async ({ page }) => {

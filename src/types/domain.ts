@@ -29,6 +29,18 @@ export interface BenchmarkDefinition {
   retryCount: number
 }
 
+export interface BenchmarkDraft {
+  benchmarkKey: string
+  name: string
+  tickerPrimary: string
+  tickerFallback: string
+  category: string
+  market: string
+  isDefault: boolean
+  isEnabled: boolean
+  displayOrder: number
+}
+
 export interface SeriesCalendarEntry {
   calendarKey: string
   calendarType: 'DAILY' | 'WEEKLY'
@@ -107,3 +119,6 @@ export interface WatchlistDraft {
   virtualEntryPrice: number
   tags: string
 }
+
+
+

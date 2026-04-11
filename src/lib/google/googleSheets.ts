@@ -83,6 +83,24 @@ function buildHoldingSheetValues(rows: HoldingsSheetRow[]) {
   ])
 }
 
+function buildBenchmarkSheetValues(rows: BenchmarksSheetRow[]) {
+  return rows.map((row) => [
+    row.benchmark_key,
+    row.ticker_primary,
+    row.ticker_fallback,
+    row.resolved_ticker,
+    row.resolved_source,
+    row.status,
+    row.market,
+    row.name,
+    row.category,
+    row.is_default ? 'TRUE' : 'FALSE',
+    row.is_enabled ? 'TRUE' : 'FALSE',
+    row.display_order,
+    row.retry_count,
+  ])
+}
+
 export async function fetchGoogleUserProfile(accessToken: string) {
   const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -361,6 +379,58 @@ export async function appendWatchlistRow(spreadsheetId: string, accessToken: str
   }
 }
 
+export async function overwriteBenchmarkRows(
+  spreadsheetId: string,
+  accessToken: string,
+  rows: BenchmarksSheetRow[],
+  availableSheets?: string[],
+) {
+  const sheets = availableSheets && availableSheets.length > 0
+    ? availableSheets
+    : (await fetchSpreadsheetConnection(spreadsheetId, accessToken)).sheets
+
+  if (!sheets.includes('Benchmarks')) {
+    throw new Error('Connected spreadsheet is missing the Benchmarks tab.')
+  }
+
+  await rewriteTemplateHeaders(spreadsheetId, accessToken, sheets)
+
+  const clearResponse = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent('Benchmarks!A2:M')}:clear`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    },
+  )
+
+  if (!clearResponse.ok) {
+    throw new Error('Failed to clear existing benchmark rows.')
+  }
+
+  if (rows.length === 0) {
+    return
+  }
+
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(`Benchmarks!A2:M${rows.length + 1}`)}?valueInputOption=USER_ENTERED`,
+    {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ values: buildBenchmarkSheetValues(rows) }),
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to rewrite benchmark rows.')
+  }
+}
+
 export async function deleteSheetRows(spreadsheetId: string, accessToken: string, sheetId: number, rowNumbers: number[]) {
   const uniqueRows = [...new Set(rowNumbers)].sort((left, right) => right - left)
   if (uniqueRows.length === 0) {
@@ -472,6 +542,7 @@ export function getTemplateValidationMessage(connection: SpreadsheetConnection) 
   const missing = REQUIRED_TABS.filter((required) => !connection.sheets.includes(required))
   return `Missing tabs: ${missing.join(', ')}`
 }
+
 
 
 

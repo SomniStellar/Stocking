@@ -11,8 +11,9 @@ import { WatchlistsPage } from './pages/WatchlistsPage'
 
 function ProtectedLayout() {
   const { session } = useGoogleWorkspace()
-  const previewMode = import.meta.env.DEV ? new URLSearchParams(window.location.search).get('preview') : null
-  const isPreviewWorkspace = previewMode === 'holdings' || previewMode === 'dashboard'
+  const previewMode = new URLSearchParams(window.location.search).get('preview')
+  const isLocalPreviewHost = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
+  const isPreviewWorkspace = isLocalPreviewHost && (previewMode === 'holdings' || previewMode === 'dashboard' || previewMode === 'settings' || previewMode === 'watchlists')
 
   if (!session && !isPreviewWorkspace) {
     return <Navigate to="/login" replace />
@@ -41,6 +42,8 @@ function App() {
 }
 
 export default App
+
+
 
 
 
