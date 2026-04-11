@@ -22,9 +22,6 @@ coverage
 
 # Local working notes
 .codex/
-.docs/
-/.docs/
-/.docs/**
 
 # Editor directories and files
 .vscode/*
