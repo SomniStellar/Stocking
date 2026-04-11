@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   color: #f5efe2;
   background:
     radial-gradient(circle at top left, rgba(210, 100, 43, 0.32), transparent 26%),
@@ -1201,3 +1201,32 @@ select.text-input {
 .chip-copy {
   align-self: center;
 }
+
+.period-toggle-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.period-toggle {
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(245, 239, 226, 0.8);
+}
+
+.period-toggle-active {
+  border-color: rgba(255, 184, 111, 0.45);
+  background: rgba(255, 184, 111, 0.14);
+  color: #fff6e5;
+}
+
+.benchmark-summary-grid {
+  margin-top: 12px;
+}
+
+.benchmark-inline-note {
+  margin-bottom: 12px;
+}
+

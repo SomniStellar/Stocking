@@ -1,5 +1,6 @@
-import type { GoogleUserProfile, SpreadsheetConnection } from '../../types/google'
+﻿import type { GoogleUserProfile, SpreadsheetConnection } from '../../types/google'
 import type {
+  BenchmarksSheetRow,
   HoldingsSheetRow,
   MonitorSheetRow,
   SpreadsheetSnapshot,
@@ -7,12 +8,14 @@ import type {
 } from '../../types/sheets'
 
 const REQUIRED_TABS = ['Holdings', 'Watchlists', 'Monitor'] as const
-const SUPPORTED_TABS = [...REQUIRED_TABS] as const
+const OPTIONAL_TABS = ['Benchmarks'] as const
+const SUPPORTED_TABS = [...REQUIRED_TABS, ...OPTIONAL_TABS] as const
 
 const TEMPLATE_HEADERS: Record<(typeof SUPPORTED_TABS)[number], string[]> = {
   Holdings: ['ticker', 'name', 'side', 'quantity', 'avg_price', 'tags', 'display_order'],
   Watchlists: ['ticker', 'name', 'list_type', 'target_price', 'virtual_qty', 'virtual_entry_price', 'tags'],
-  Monitor: ['ticker', 'full_ticker', 'closeyest', 'ytd_price', 'price_3y', 'price_5y', 'tradetime'],
+  Monitor: ['ticker', 'full_ticker', 'closeyest', 'ytd_price', 'price_1y', 'price_3y', 'price_5y', 'tradetime'],
+  Benchmarks: ['benchmark_key', 'ticker_primary', 'ticker_fallback', 'resolved_ticker', 'resolved_source', 'status', 'market', 'name', 'category', 'is_default', 'is_enabled', 'display_order', 'retry_count'],
 }
 
 function toNumber(value: unknown) {
@@ -60,6 +63,7 @@ function buildMonitorFormulaRows(tickers: string[]) {
       `=IF(${tickerRef}="", "", ${tickerRef})`,
       `=IFERROR(GOOGLEFINANCE(${fullTickerRef},"closeyest"),"")`,
       `=IFERROR(INDEX(GOOGLEFINANCE(${fullTickerRef},"price",DATE(YEAR(TODAY()),1,1)),2,2),"")`,
+      `=IFERROR(INDEX(GOOGLEFINANCE(${fullTickerRef},"price",EDATE(TODAY(),-12)),2,2),"")`,
       `=IFERROR(INDEX(GOOGLEFINANCE(${fullTickerRef},"price",EDATE(TODAY(),-36)),2,2),"")`,
       `=IFERROR(INDEX(GOOGLEFINANCE(${fullTickerRef},"price",EDATE(TODAY(),-60)),2,2),"")`,
       `=IFERROR(TEXT(GOOGLEFINANCE(${fullTickerRef},"tradetime"),"yyyy-mm-dd hh:mm"),"")`,
@@ -190,10 +194,28 @@ export async function fetchSpreadsheetSnapshot(spreadsheetId: string, accessToke
       full_ticker: record.full_ticker,
       closeyest: toNumber(record.closeyest),
       ytd_price: toNumber(record.ytd_price),
+      price_1y: toNumber(record.price_1y),
       price_3y: toNumber(record.price_3y),
       price_5y: toNumber(record.price_5y),
       tradetime: record.tradetime,
     })),
+    benchmarks: mapRows<BenchmarksSheetRow>(valueMap.get('Benchmarks'), (record) => ({
+      benchmark_key: record.benchmark_key,
+      ticker_primary: record.ticker_primary,
+      ticker_fallback: record.ticker_fallback,
+      resolved_ticker: record.resolved_ticker,
+      resolved_source: record.resolved_source === 'fallback' ? 'fallback' : 'primary',
+      status: record.status === 'retrying' || record.status === 'fallback' || record.status === 'failed' ? record.status : 'ready',
+      market: record.market,
+      name: record.name,
+      category: record.category,
+      is_default: ['true','1','yes','y'].includes(record.is_default.toLowerCase()),
+      is_enabled: ['true','1','yes','y'].includes(record.is_enabled.toLowerCase()),
+      display_order: toNumber(record.display_order),
+      retry_count: toNumber(record.retry_count),
+    })),
+    seriesCalendar: [],
+    series: [],
   } satisfies SpreadsheetSnapshot
 }
 
@@ -221,8 +243,8 @@ export async function createTemplateSpreadsheet(title: string, accessToken: stri
   }
 
   const spreadsheetId = created.spreadsheetId
-  await rewriteTemplateHeaders(spreadsheetId, accessToken)
   const connection = await fetchSpreadsheetConnection(spreadsheetId, accessToken)
+  await rewriteTemplateHeaders(spreadsheetId, accessToken, connection.sheets)
 
   return {
     ...connection,
@@ -233,8 +255,14 @@ export async function createTemplateSpreadsheet(title: string, accessToken: stri
   } satisfies SpreadsheetConnection
 }
 
-export async function rewriteTemplateHeaders(spreadsheetId: string, accessToken: string) {
-  const data = SUPPORTED_TABS.map((tab) => ({
+export async function rewriteTemplateHeaders(spreadsheetId: string, accessToken: string, availableSheets?: string[]) {
+  const sheets = availableSheets && availableSheets.length > 0
+    ? availableSheets
+    : (await fetchSpreadsheetConnection(spreadsheetId, accessToken)).sheets
+
+  const targetTabs = SUPPORTED_TABS.filter((tab) => sheets.includes(tab)) as (typeof SUPPORTED_TABS)[number][]
+
+  const data = targetTabs.map((tab) => ({
     range: `${tab}!A1:${String.fromCharCode(64 + TEMPLATE_HEADERS[tab].length)}1`,
     values: [TEMPLATE_HEADERS[tab]],
   }))
@@ -367,8 +395,19 @@ export async function deleteSheetRows(spreadsheetId: string, accessToken: string
   }
 }
 
-export async function resetSpreadsheetRows(spreadsheetId: string, accessToken: string) {
-  await rewriteTemplateHeaders(spreadsheetId, accessToken)
+export async function resetSpreadsheetRows(spreadsheetId: string, accessToken: string, availableSheets?: string[]) {
+  const sheets = availableSheets && availableSheets.length > 0
+    ? availableSheets
+    : (await fetchSpreadsheetConnection(spreadsheetId, accessToken)).sheets
+
+  await rewriteTemplateHeaders(spreadsheetId, accessToken, sheets)
+
+  const ranges = [
+    'Holdings!A2:G',
+    'Watchlists!A2:G',
+    'Monitor!A2:H',
+    ...(sheets.includes('Benchmarks') ? ['Benchmarks!A2:M'] : []),
+  ]
 
   const response = await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchClear`,
@@ -378,9 +417,7 @@ export async function resetSpreadsheetRows(spreadsheetId: string, accessToken: s
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        ranges: ['Holdings!A2:G', 'Watchlists!A2:G', 'Monitor!A2:G'],
-      }),
+      body: JSON.stringify({ ranges }),
     },
   )
 
@@ -388,12 +425,11 @@ export async function resetSpreadsheetRows(spreadsheetId: string, accessToken: s
     throw new Error('Failed to reset spreadsheet rows.')
   }
 }
-
 export async function syncMonitorSheet(spreadsheetId: string, accessToken: string, tickers: string[]) {
   const uniqueTickers = [...new Set(tickers.map((ticker) => ticker.trim().toUpperCase()).filter(Boolean))]
 
   const clearResponse = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent('Monitor!A2:G')}:clear`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent('Monitor!A2:H')}:clear`,
     {
       method: 'POST',
       headers: {
@@ -436,3 +472,13 @@ export function getTemplateValidationMessage(connection: SpreadsheetConnection) 
   const missing = REQUIRED_TABS.filter((required) => !connection.sheets.includes(required))
   return `Missing tabs: ${missing.join(', ')}`
 }
+
+
+
+
+
+
+
+
+
+

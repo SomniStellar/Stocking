@@ -1,9 +1,61 @@
-export interface StockMonitorRow {
+﻿export interface StockMonitorRow {
   ticker: string
   closeyest: number
   ytdPrice: number
+  price1Y: number
   price3Y: number
   price5Y: number
+}
+
+export type ComparisonPeriod = 'YTD' | '1Y' | '3Y' | '5Y'
+
+export type BenchmarkResolvedSource = 'primary' | 'fallback'
+
+export type BenchmarkStatus = 'ready' | 'retrying' | 'fallback' | 'failed'
+
+export interface BenchmarkDefinition {
+  benchmarkKey: string
+  tickerPrimary: string
+  tickerFallback: string
+  resolvedTicker: string
+  resolvedSource: BenchmarkResolvedSource
+  status: BenchmarkStatus
+  market: string
+  name: string
+  category: string
+  isDefault: boolean
+  isEnabled: boolean
+  displayOrder: number
+  retryCount: number
+}
+
+export interface SeriesCalendarEntry {
+  calendarKey: string
+  calendarType: 'DAILY' | 'WEEKLY'
+  pointDate: string
+  weekAnchor: string
+  periodScope: 'YTD' | 'LONG'
+}
+
+export interface SeriesPoint {
+  seriesKey: string
+  seriesType: 'portfolio' | 'benchmark'
+  ticker: string
+  name: string
+  sampleType: 'DAILY' | 'WEEKLY'
+  pointDate: string
+  pointValue: number
+}
+
+export interface BenchmarkComparisonCard {
+  benchmarkKey: string
+  name: string
+  period: ComparisonPeriod
+  resolvedSource: BenchmarkResolvedSource
+  status: BenchmarkStatus
+  value: number
+  deltaFromPortfolio: number
+  caption: string
 }
 
 export interface HoldingRow {
@@ -17,6 +69,7 @@ export interface HoldingRow {
   unrealizedProfit: number
   unrealizedReturn: number
   ytdReturn: number
+  return1Y: number
   return3Y: number
   return5Y: number
   tags: string

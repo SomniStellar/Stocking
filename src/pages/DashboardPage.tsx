@@ -1,18 +1,38 @@
-﻿import { SectionCard } from '../components/SectionCard'
+﻿import { useState } from 'react'
+import { SectionCard } from '../components/SectionCard'
 import { SummaryCard } from '../components/SummaryCard'
+import { buildBenchmarkComparisonCards, buildBenchmarkRows, createComparisonPeriodLabel, validateBenchmarkRows } from '../data/benchmarkData'
 import { buildHoldingRows, buildMonitorRows, buildWatchlistRows } from '../data/sheetData'
+import type { ComparisonPeriod } from '../types/domain'
 import { useGoogleWorkspace } from '../features/google/GoogleWorkspaceContext'
+
+const COMPARISON_PERIODS: ComparisonPeriod[] = ['YTD', '1Y', '3Y', '5Y']
 
 export function DashboardPage() {
   const { session, spreadsheet, envConfigured, snapshot } = useGoogleWorkspace()
+  const [comparisonPeriod, setComparisonPeriod] = useState<ComparisonPeriod>('YTD')
+
   const monitorRows = buildMonitorRows(snapshot)
   const holdings = buildHoldingRows(snapshot)
   const watchlists = buildWatchlistRows(snapshot)
+  const benchmarks = buildBenchmarkRows(snapshot)
+  const benchmarkValidation = validateBenchmarkRows(benchmarks)
+  const comparisonCards = buildBenchmarkComparisonCards(snapshot, holdings, comparisonPeriod)
 
   const totalInvested = holdings.reduce((sum, item) => sum + item.invested, 0)
   const totalValue = holdings.reduce((sum, item) => sum + item.marketValue, 0)
   const totalProfit = holdings.reduce((sum, item) => sum + item.unrealizedProfit, 0)
   const totalYield = totalInvested === 0 ? 0 : (totalProfit / totalInvested) * 100
+
+  const benchmarkValidationCaption = benchmarkValidation.duplicateKey
+    ? `중복 benchmark key: ${benchmarkValidation.duplicateKey}`
+    : benchmarkValidation.duplicateTicker
+      ? `중복 티커: ${benchmarkValidation.duplicateTicker}`
+      : benchmarkValidation.invalidMarketKey
+        ? `미국 외 시장 사용자 지표: ${benchmarkValidation.invalidMarketKey}`
+        : benchmarkValidation.customLimitExceeded
+          ? '사용자 추가 지표는 최대 3개까지 허용됨'
+          : null
 
   return (
     <div className="page-stack">
@@ -38,6 +58,45 @@ export function DashboardPage() {
         <SummaryCard title="Unrealized P/L" value={`$${totalProfit.toFixed(2)}`} caption={`${totalYield.toFixed(2)}% return`} tone={totalProfit >= 0 ? 'positive' : 'negative'} />
         <SummaryCard title="Watchlists" value={`${watchlists.length}`} caption="Favorites and ideas" tone="neutral" />
       </section>
+
+      <SectionCard
+        title="Benchmark Comparison"
+        description="Configured benchmark targets compared to the current portfolio composition."
+        actions={
+          <div className="period-toggle-row">
+            {COMPARISON_PERIODS.map((period) => (
+              <button
+                key={period}
+                className={`period-toggle ${comparisonPeriod === period ? 'period-toggle-active' : ''}`}
+                onClick={() => setComparisonPeriod(period)}
+                type="button"
+              >
+                {createComparisonPeriodLabel(period)}
+              </button>
+            ))}
+          </div>
+        }
+      >
+        {benchmarkValidationCaption ? (
+          <div className="message-box message-box-neutral benchmark-inline-note">{benchmarkValidationCaption}</div>
+        ) : null}
+
+        {comparisonCards.length === 0 ? (
+          <div className="empty-note">No enabled benchmark rows yet. Add benchmark targets in the Benchmarks tab.</div>
+        ) : (
+          <div className="summary-grid benchmark-summary-grid">
+            {comparisonCards.map((card) => (
+              <SummaryCard
+                key={card.benchmarkKey}
+                title={card.name}
+                value={`${card.value >= 0 ? '+' : ''}${card.value.toFixed(2)}%`}
+                caption={card.caption || `Portfolio diff ${card.deltaFromPortfolio >= 0 ? '+' : ''}${card.deltaFromPortfolio.toFixed(2)}%p`}
+                tone={card.status === 'failed' ? 'neutral' : card.value >= 0 ? 'positive' : 'negative'}
+              />
+            ))}
+          </div>
+        )}
+      </SectionCard>
 
       <div className="content-grid">
         <SectionCard title="Current Holdings" description="Snapshot rows from the Holdings sheet.">
@@ -67,6 +126,7 @@ export function DashboardPage() {
           <ul className="check-list">
             <li>{watchlists.length} watchlist rows loaded</li>
             <li>{monitorRows.length} monitor rows loaded</li>
+            <li>{benchmarks.length} benchmark rows loaded</li>
             <li>{spreadsheet ? 'Template spreadsheet connected' : 'Template spreadsheet creation pending'}</li>
           </ul>
         </SectionCard>

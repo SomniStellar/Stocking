@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   HoldingRow,
   StockMonitorRow,
   WatchlistRow,
@@ -15,6 +15,7 @@ export function buildMonitorRows(snapshot: SpreadsheetSnapshot): StockMonitorRow
     ticker: row.ticker,
     closeyest: toNumber(row.closeyest),
     ytdPrice: toNumber(row.ytd_price),
+    price1Y: toNumber(row.price_1y),
     price3Y: toNumber(row.price_3y),
     price5Y: toNumber(row.price_5y),
   }))
@@ -46,12 +47,14 @@ export function buildHoldingRows(snapshot: SpreadsheetSnapshot): HoldingRow[] {
       const avgPrice = quantity === 0 ? 0 : invested / quantity
       const closeyest = toNumber(monitor?.closeyest)
       const ytdPrice = toNumber(monitor?.ytd_price)
+      const price1Y = toNumber(monitor?.price_1y)
       const price3Y = toNumber(monitor?.price_3y)
       const price5Y = toNumber(monitor?.price_5y)
       const marketValue = quantity * closeyest
       const unrealizedProfit = marketValue - invested
       const unrealizedReturn = invested === 0 ? 0 : (unrealizedProfit / invested) * 100
       const ytdReturn = ytdPrice === 0 ? 0 : ((closeyest - ytdPrice) / ytdPrice) * 100
+      const return1Y = price1Y === 0 ? 0 : ((closeyest - price1Y) / price1Y) * 100
       const return3Y = price3Y === 0 ? 0 : ((closeyest - price3Y) / price3Y) * 100
       const return5Y = price5Y === 0 ? 0 : ((closeyest - price5Y) / price5Y) * 100
       const mergedTags = [...new Set(rows.flatMap((row) => String(row.tags ?? '').split(',').map((tag) => tag.trim()).filter(Boolean)))].join(', ')
@@ -73,6 +76,7 @@ export function buildHoldingRows(snapshot: SpreadsheetSnapshot): HoldingRow[] {
         unrealizedProfit,
         unrealizedReturn,
         ytdReturn,
+        return1Y,
         return3Y,
         return5Y,
         tags: mergedTags,

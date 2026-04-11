@@ -130,7 +130,7 @@ export function SettingsPage() {
           </div>
 
           <div className="message-box message-box-neutral">
-            Reset clears Holdings, Watchlists, and Monitor rows but keeps the sheet, tabs, and headers.
+            Reset clears Holdings, Watchlists, Monitor, and Benchmarks rows when present, but keeps the sheet, tabs, and headers.
           </div>
 
           <div className="detail-list">
@@ -178,7 +178,7 @@ export function SettingsPage() {
         <ul className="check-list">
           <li>Holdings support BUY and SELL rows</li>
           <li>Watchlists unify favorites and ideas</li>
-          <li>Monitor is auto-synced from current tickers</li>
+          <li>Monitor is auto-synced from current tickers</li>`r`n          <li>Benchmarks sheet stores comparison targets and fallback metadata</li>
           <li>Previous close as the price baseline</li>
           <li>No external market API</li>
         </ul>
@@ -195,3 +195,4 @@ export function SettingsPage() {
     </div>
   )
 }
+

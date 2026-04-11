@@ -28,6 +28,9 @@ const EMPTY_SNAPSHOT: SpreadsheetSnapshot = {
   holdings: [],
   watchlists: [],
   monitor: [],
+  benchmarks: [],
+  seriesCalendar: [],
+  series: [],
 }
 
 const PREVIEW_HOLDINGS_SNAPSHOT: SpreadsheetSnapshot = {
@@ -39,19 +42,29 @@ const PREVIEW_HOLDINGS_SNAPSHOT: SpreadsheetSnapshot = {
   ],
   watchlists: [],
   monitor: [
-    { ticker: 'AAPL', full_ticker: 'NASDAQ:AAPL', closeyest: 211.42, ytd_price: 192.33, price_3y: 148.72, price_5y: 122.5, tradetime: '2026-04-10 09:00' },
-    { ticker: 'MSFT', full_ticker: 'NASDAQ:MSFT', closeyest: 468.55, ytd_price: 438.21, price_3y: 312.44, price_5y: 246.11, tradetime: '2026-04-10 09:00' },
-    { ticker: 'TSLA', full_ticker: 'NASDAQ:TSLA', closeyest: 201.18, ytd_price: 228.4, price_3y: 179.22, price_5y: 151.85, tradetime: '2026-04-10 09:00' },
-    { ticker: 'NVDA', full_ticker: 'NASDAQ:NVDA', closeyest: 924.36, ytd_price: 801.2, price_3y: 461.15, price_5y: 217.7, tradetime: '2026-04-10 09:00' },
+    { ticker: 'SPY', full_ticker: 'NYSEARCA:SPY', closeyest: 579.12, ytd_price: 548.05, price_1y: 517.44, price_3y: 412.88, price_5y: 322.11, tradetime: '2026-04-10 09:00' },
+    { ticker: 'QQQ', full_ticker: 'NASDAQ:QQQ', closeyest: 512.44, ytd_price: 471.02, price_1y: 438.61, price_3y: 339.72, price_5y: 258.47, tradetime: '2026-04-10 09:00' },
+    { ticker: 'DIA', full_ticker: 'NYSEARCA:DIA', closeyest: 438.17, ytd_price: 421.5, price_1y: 397.85, price_3y: 342.66, price_5y: 286.3, tradetime: '2026-04-10 09:00' },
+    { ticker: 'AAPL', full_ticker: 'NASDAQ:AAPL', closeyest: 211.42, ytd_price: 192.33, price_1y: 182.14, price_3y: 148.72, price_5y: 122.5, tradetime: '2026-04-10 09:00' },
+    { ticker: 'MSFT', full_ticker: 'NASDAQ:MSFT', closeyest: 468.55, ytd_price: 438.21, price_1y: 405.33, price_3y: 312.44, price_5y: 246.11, tradetime: '2026-04-10 09:00' },
+    { ticker: 'TSLA', full_ticker: 'NASDAQ:TSLA', closeyest: 201.18, ytd_price: 228.4, price_1y: 172.44, price_3y: 179.22, price_5y: 151.85, tradetime: '2026-04-10 09:00' },
+    { ticker: 'NVDA', full_ticker: 'NASDAQ:NVDA', closeyest: 924.36, ytd_price: 801.2, price_1y: 745.22, price_3y: 461.15, price_5y: 217.7, tradetime: '2026-04-10 09:00' },
   ],
+  benchmarks: [
+    { benchmark_key: 'SP500', ticker_primary: 'SPY', ticker_fallback: '', resolved_ticker: 'SPY', resolved_source: 'primary', status: 'ready', market: 'US', name: 'S&P 500', category: 'INDEX', is_default: true, is_enabled: true, display_order: 1, retry_count: 0 },
+    { benchmark_key: 'NASDAQ100', ticker_primary: 'QQQ', ticker_fallback: '', resolved_ticker: 'QQQ', resolved_source: 'primary', status: 'ready', market: 'US', name: 'Nasdaq 100', category: 'INDEX', is_default: true, is_enabled: true, display_order: 2, retry_count: 0 },
+    { benchmark_key: 'DOW', ticker_primary: 'DIA', ticker_fallback: '', resolved_ticker: 'DIA', resolved_source: 'primary', status: 'ready', market: 'US', name: 'Dow Jones', category: 'INDEX', is_default: true, is_enabled: true, display_order: 3, retry_count: 0 },
+  ],
+  seriesCalendar: [],
+  series: [],
 }
 
 const PREVIEW_SPREADSHEET = {
-  id: 'dev-preview-holdings',
-  title: '[Dev/Test] Holdings Layout Preview',
-  url: 'https://example.invalid/dev-preview-holdings',
-  sheets: ['Holdings', 'Watchlists', 'Monitor'],
-  sheetIds: { Holdings: 0, Watchlists: 1, Monitor: 2 },
+  id: 'dev-preview-workspace',
+  title: '[Dev/Test] Workspace Preview',
+  url: 'https://example.invalid/dev-preview-workspace',
+  sheets: ['Holdings', 'Watchlists', 'Monitor', 'Benchmarks'],
+  sheetIds: { Holdings: 0, Watchlists: 1, Monitor: 2, Benchmarks: 3 },
   isTemplateValid: true,
   checkedAt: new Date('2026-04-10T00:00:00.000Z').toISOString(),
 } satisfies GoogleWorkspaceContextValue['spreadsheet']
@@ -60,6 +73,7 @@ function collectMonitorTickers(snapshot: SpreadsheetSnapshot) {
   return [...new Set([
     ...snapshot.holdings.map((row) => row.ticker),
     ...snapshot.watchlists.map((row) => row.ticker),
+    ...snapshot.benchmarks.filter((row) => row.is_enabled).map((row) => row.resolved_ticker || row.ticker_primary),
   ].map((ticker) => ticker.trim().toUpperCase()).filter(Boolean))]
 }
 
@@ -82,9 +96,10 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
   }, [])
 
   useEffect(() => {
-    const isPreviewHoldings = import.meta.env.DEV && new URLSearchParams(window.location.search).get('preview') === 'holdings'
+    const previewMode = import.meta.env.DEV ? new URLSearchParams(window.location.search).get('preview') : null
+    const isPreviewWorkspace = previewMode === 'holdings' || previewMode === 'dashboard'
 
-    if (!isPreviewHoldings) {
+    if (!isPreviewWorkspace) {
       return
     }
 
@@ -92,13 +107,13 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
       accessToken: 'dev-preview-token',
       profile: {
         email: 'preview@stocking.local',
-        name: '[Dev/Test] Holdings Preview',
+        name: '[Dev/Test] Workspace Preview',
       },
     })
     setSpreadsheet(PREVIEW_SPREADSHEET)
     setSnapshot(PREVIEW_HOLDINGS_SNAPSHOT)
     setStoredSpreadsheetId('')
-    setValidationMessage('[Dev/Test] Holdings preview data is active.')
+    setValidationMessage('[Dev/Test] Preview data is active.')
     setErrorMessage('[Dev/Test] Preview mode bypasses live Google Sheets and renders sample data for layout review.')
     setClientReady(true)
   }, [])
@@ -268,7 +283,7 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
     setErrorMessage(null)
 
     try {
-      await resetSpreadsheetRows(spreadsheet.id, session.accessToken)
+      await resetSpreadsheetRows(spreadsheet.id, session.accessToken, spreadsheet.sheets)
       await hydrateSpreadsheet(spreadsheet.id, session.accessToken, { syncMonitor: true })
       setValidationMessage('Sheet rows were reset. Headers were preserved.')
       return true
@@ -574,3 +589,11 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
 
   return <GoogleWorkspaceContext.Provider value={value}>{children}</GoogleWorkspaceContext.Provider>
 }
+
+
+
+
+
+
+
+
