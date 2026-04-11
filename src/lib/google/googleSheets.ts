@@ -209,8 +209,8 @@ export async function fetchSpreadsheetSnapshot(spreadsheetId: string, accessToke
       market: record.market,
       name: record.name,
       category: record.category,
-      is_default: ['true','1','yes','y'].includes(record.is_default.toLowerCase()),
-      is_enabled: ['true','1','yes','y'].includes(record.is_enabled.toLowerCase()),
+      is_default: ['true', '1', 'yes', 'y'].includes(normalizeText(record.is_default).toLowerCase()),
+      is_enabled: ['true', '1', 'yes', 'y'].includes(normalizeText(record.is_enabled).toLowerCase()),
       display_order: toNumber(record.display_order),
       retry_count: toNumber(record.retry_count),
     })),
@@ -448,7 +448,7 @@ export async function syncMonitorSheet(spreadsheetId: string, accessToken: strin
   }
 
   const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(`Monitor!A2:G${uniqueTickers.length + 1}`)}?valueInputOption=USER_ENTERED`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(`Monitor!A2:H${uniqueTickers.length + 1}`)}?valueInputOption=USER_ENTERED`,
     {
       method: 'PUT',
       headers: {
@@ -472,6 +472,9 @@ export function getTemplateValidationMessage(connection: SpreadsheetConnection) 
   const missing = REQUIRED_TABS.filter((required) => !connection.sheets.includes(required))
   return `Missing tabs: ${missing.join(', ')}`
 }
+
+
+
 
 
 

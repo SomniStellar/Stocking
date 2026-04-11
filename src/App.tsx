@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+﻿import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppLayout } from './app/AppLayout'
 import { AppErrorBoundary } from './components/AppErrorBoundary'
 import { useGoogleWorkspace } from './features/google/GoogleWorkspaceContext'
@@ -11,9 +11,10 @@ import { WatchlistsPage } from './pages/WatchlistsPage'
 
 function ProtectedLayout() {
   const { session } = useGoogleWorkspace()
-  const isPreviewHoldings = import.meta.env.DEV && new URLSearchParams(window.location.search).get('preview') === 'holdings'
+  const previewMode = import.meta.env.DEV ? new URLSearchParams(window.location.search).get('preview') : null
+  const isPreviewWorkspace = previewMode === 'holdings' || previewMode === 'dashboard'
 
-  if (!session && !isPreviewHoldings) {
+  if (!session && !isPreviewWorkspace) {
     return <Navigate to="/login" replace />
   }
 
@@ -40,4 +41,7 @@ function App() {
 }
 
 export default App
+
+
+
 

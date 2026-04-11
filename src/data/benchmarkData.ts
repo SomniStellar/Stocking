@@ -139,6 +139,37 @@ export function validateBenchmarkRows(rows: BenchmarkDefinition[]) {
   }
 }
 
+function filterRenderableBenchmarkRows(rows: BenchmarkDefinition[]) {
+  const seenKeys = new Set<string>()
+  const seenTickers = new Set<string>()
+  let customCount = 0
+
+  return rows.filter((row) => {
+    if (!row.isEnabled) {
+      return false
+    }
+
+    if (seenKeys.has(row.benchmarkKey) || seenTickers.has(row.tickerPrimary)) {
+      return false
+    }
+
+    if (!row.isDefault) {
+      if (row.market && row.market !== 'US') {
+        return false
+      }
+
+      customCount += 1
+      if (customCount > 3) {
+        return false
+      }
+    }
+
+    seenKeys.add(row.benchmarkKey)
+    seenTickers.add(row.tickerPrimary)
+    return true
+  })
+}
+
 export function createBenchmarkStatusCaption(
   name: string,
   status: BenchmarkStatus,
@@ -180,8 +211,7 @@ export function buildBenchmarkComparisonCards(
   const monitorMap = new Map(snapshot.monitor.map((row) => [row.ticker.trim().toUpperCase(), row]))
   const portfolioReturn = calculatePortfolioPeriodReturn(holdings, period)
 
-  return buildBenchmarkRows(snapshot)
-    .filter((row) => row.isEnabled)
+  return filterRenderableBenchmarkRows(buildBenchmarkRows(snapshot))
     .map((row) => {
       const resolvedTicker = (row.resolvedTicker || row.tickerPrimary).trim().toUpperCase()
       const monitor = monitorMap.get(resolvedTicker)
@@ -204,3 +234,7 @@ export function buildBenchmarkComparisonCards(
       }
     })
 }
+
+
+
+
