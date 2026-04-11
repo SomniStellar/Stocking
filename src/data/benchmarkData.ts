@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   BenchmarkComparisonCard,
   BenchmarkDefinition,
   BenchmarkResolvedSource,
@@ -68,7 +68,7 @@ function getHoldingPeriodReturn(row: HoldingRow, period: ComparisonPeriod) {
   }
 }
 
-function calculatePortfolioPeriodReturn(holdings: HoldingRow[], period: ComparisonPeriod) {
+export function calculatePortfolioPeriodReturn(holdings: HoldingRow[], period: ComparisonPeriod) {
   const totals = holdings.reduce(
     (sum, row) => {
       const currentValue = row.quantity * row.closeyest
@@ -139,34 +139,63 @@ export function validateBenchmarkRows(rows: BenchmarkDefinition[]) {
   }
 }
 
-function filterRenderableBenchmarkRows(rows: BenchmarkDefinition[]) {
+function evaluateRenderableBenchmarks(rows: BenchmarkDefinition[]) {
   const seenKeys = new Set<string>()
   const seenTickers = new Set<string>()
   let customCount = 0
 
-  return rows.filter((row) => {
+  return rows.map((row) => {
     if (!row.isEnabled) {
-      return false
+      return {
+        ...row,
+        isRenderable: false,
+        exclusionReason: '비교 비활성화',
+      }
     }
 
-    if (seenKeys.has(row.benchmarkKey) || seenTickers.has(row.tickerPrimary)) {
-      return false
+    if (seenKeys.has(row.benchmarkKey)) {
+      return {
+        ...row,
+        isRenderable: false,
+        exclusionReason: '중복 benchmark key로 비교 제외',
+      }
+    }
+
+    if (seenTickers.has(row.tickerPrimary)) {
+      return {
+        ...row,
+        isRenderable: false,
+        exclusionReason: '중복 티커로 비교 제외',
+      }
+    }
+
+    if (!row.isDefault && row.market && row.market !== 'US') {
+      return {
+        ...row,
+        isRenderable: false,
+        exclusionReason: '미국 외 시장 custom 지표는 비교 제외',
+      }
     }
 
     if (!row.isDefault) {
-      if (row.market && row.market !== 'US') {
-        return false
-      }
-
       customCount += 1
       if (customCount > 3) {
-        return false
+        return {
+          ...row,
+          isRenderable: false,
+          exclusionReason: 'custom 지표 최대 3개 초과로 비교 제외',
+        }
       }
     }
 
     seenKeys.add(row.benchmarkKey)
     seenTickers.add(row.tickerPrimary)
-    return true
+
+    return {
+      ...row,
+      isRenderable: true,
+      exclusionReason: '',
+    }
   })
 }
 
@@ -211,30 +240,32 @@ export function buildBenchmarkComparisonCards(
   const monitorMap = new Map(snapshot.monitor.map((row) => [row.ticker.trim().toUpperCase(), row]))
   const portfolioReturn = calculatePortfolioPeriodReturn(holdings, period)
 
-  return filterRenderableBenchmarkRows(buildBenchmarkRows(snapshot))
+  return evaluateRenderableBenchmarks(buildBenchmarkRows(snapshot))
     .map((row) => {
       const resolvedTicker = (row.resolvedTicker || row.tickerPrimary).trim().toUpperCase()
       const monitor = monitorMap.get(resolvedTicker)
       const currentPrice = toNumber(monitor?.closeyest)
       const basePrice = getMonitorBasePrice(monitor, period)
-      const status = currentPrice > 0 && basePrice > 0 ? row.status : 'failed'
+      const calculatedStatus = currentPrice > 0 && basePrice > 0 ? row.status : 'failed'
       const value = currentPrice > 0 && basePrice > 0
         ? ((currentPrice - basePrice) / basePrice) * 100
         : 0
+      const caption = !row.isRenderable
+        ? row.exclusionReason
+        : createBenchmarkStatusCaption(row.name || resolvedTicker, calculatedStatus, row.resolvedSource)
 
       return {
         benchmarkKey: row.benchmarkKey,
         name: row.name || resolvedTicker,
         period,
         resolvedSource: row.resolvedSource,
-        status,
+        status: calculatedStatus,
         value,
-        deltaFromPortfolio: value - portfolioReturn,
-        caption: createBenchmarkStatusCaption(row.name || resolvedTicker, status, row.resolvedSource),
+        deltaFromPortfolio: portfolioReturn - value,
+        caption,
+        isEnabled: row.isEnabled,
+        isRenderable: row.isRenderable,
+        isDefault: row.isDefault,
       }
     })
 }
-
-
-
-

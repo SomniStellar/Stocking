@@ -1,4 +1,4 @@
-import { parseTags } from '../../lib/tags'
+﻿import { parseTags } from '../../lib/tags'
 import type { HoldingDraft, HoldingRow } from '../../types/domain'
 
 export function formatCurrency(value: number) {
@@ -15,7 +15,16 @@ export function formatQuantity(value: number) {
 }
 
 export function normalizeTags(value: string) {
-  return parseTags(value).sort((left, right) => left.localeCompare(right)).join(', ')
+  const unique = new Map<string, string>()
+
+  parseTags(value).forEach((tag) => {
+    const normalized = tag.toLowerCase()
+    if (!unique.has(normalized)) {
+      unique.set(normalized, normalized)
+    }
+  })
+
+  return [...unique.values()].sort((left, right) => left.localeCompare(right)).join(', ')
 }
 
 export function buildHoldingDraft(row: HoldingRow): HoldingDraft {

@@ -149,8 +149,23 @@ export function HoldingsPage() {
   }
 
   function toggleCostMode() {
-    setCostInputMode((current) => current === 'avg' ? 'total' : 'avg')
-    setFormMessage(null)
+    setCostInputMode((current) => {
+      const nextMode = current === 'avg' ? 'total' : 'avg'
+
+      setCostInput((existing) => {
+        if (draft.quantity <= 0 || existing <= 0) {
+          return existing
+        }
+
+        if (nextMode === 'total') {
+          return Number((existing * draft.quantity).toFixed(6))
+        }
+
+        return Number((existing / draft.quantity).toFixed(6))
+      })
+      setFormMessage(null)
+      return nextMode
+    })
   }
 
   async function submitDraft(event: FormEvent<HTMLFormElement>) {
@@ -308,7 +323,7 @@ export function HoldingsPage() {
 
           <div className="metric-card metric-card-input">
             <div
-              className="field-label-inline field-label-inline-clickable"
+              className="field-label-inline field-label-inline-clickable field-label-inline-mode-toggle"
               onClick={toggleCostMode}
               role="button"
               tabIndex={0}
@@ -417,7 +432,7 @@ export function HoldingsPage() {
             ))}
           </div>
           <div className="card-icon-actions">
-            <span className="drag-handle" aria-hidden="true">::</span>
+
             <button className="icon-button" type="button" onClick={() => openEditForm(item)} disabled={busyState !== 'idle'} aria-label={`Edit ${item.ticker}`}>
               <EditIcon />
             </button>
@@ -432,28 +447,44 @@ export function HoldingsPage() {
             <strong>{item.name || item.ticker}</strong>
             <small>{item.ticker}</small>
           </div>
-          <div className="metric-card metric-card-price">
-            <span className="metric-label-split">Price <span className="metric-label-break">/ Avg</span></span>
-            <strong>{formatCurrency(item.closeyest)}</strong>
-            <small>{formatCurrency(item.avgPrice)}</small>
+          <div className="metric-card metric-card-price metric-card-paired">
+            <div className="metric-pair-grid">
+              <div className="metric-pair-block">
+                <span>Price</span>
+                <strong>{formatCurrency(item.closeyest)}</strong>
+              </div>
+              <div className="metric-pair-block">
+                <span>Avg</span>
+                <strong>{formatCurrency(item.avgPrice)}</strong>
+              </div>
+            </div>
           </div>
-          <div className="metric-card metric-card-profit">
+          <div className="metric-card metric-card-profit metric-card-profit-compact">
             <span>P/L</span>
-            <strong className={item.unrealizedProfit >= 0 ? 'text-positive' : 'text-negative'}>
-              {formatCurrency(item.unrealizedProfit)}
-            </strong>
-            <small className={item.unrealizedReturn >= 0 ? 'text-positive' : 'text-negative'}>
-              {formatPercent(item.unrealizedReturn)}
-            </small>
+            <div className="metric-profit-values">
+              <strong className={item.unrealizedProfit >= 0 ? 'text-positive' : 'text-negative'}>
+                {formatCurrency(item.unrealizedProfit)}
+              </strong>
+              <strong className={item.unrealizedReturn >= 0 ? 'text-positive' : 'text-negative'}>
+                {formatPercent(item.unrealizedReturn)}
+              </strong>
+            </div>
           </div>
           <div className="metric-card metric-card-quantity">
             <span>Quantity</span>
             <strong>{formatQuantity(item.quantity)}</strong>
           </div>
-          <div className="metric-card metric-card-value">
-            <span className="metric-label-split">Value <span className="metric-label-break">/ Invested</span></span>
-            <strong>{formatCurrency(item.marketValue)}</strong>
-            <small>{formatCurrency(item.invested)}</small>
+          <div className="metric-card metric-card-value metric-card-paired">
+            <div className="metric-pair-grid">
+              <div className="metric-pair-block">
+                <span>Value</span>
+                <strong>{formatCurrency(item.marketValue)}</strong>
+              </div>
+              <div className="metric-pair-block">
+                <span>Invested</span>
+                <strong>{formatCurrency(item.invested)}</strong>
+              </div>
+            </div>
           </div>
           <div className="metric-card metric-card-period-list">
             <div className="metric-period-line"><span>YTD</span><strong className={item.ytdReturn >= 0 ? 'text-positive' : 'text-negative'}>{formatPercent(item.ytdReturn)}</strong></div>
@@ -482,10 +513,12 @@ export function HoldingsPage() {
             <span>Value</span>
             <strong>{formatCurrency(summary.marketValue)}</strong>
           </div>
-          <div className="metric-card metric-card-profit">
+          <div className="metric-card metric-card-profit metric-card-profit-compact">
             <span>P/L</span>
-            <strong className={summary.unrealized >= 0 ? 'text-positive' : 'text-negative'}>{formatCurrency(summary.unrealized)}</strong>
-            <small className={summary.unrealizedReturn >= 0 ? 'text-positive' : 'text-negative'}>{formatPercent(summary.unrealizedReturn)}</small>
+            <div className="metric-profit-values">
+              <strong className={summary.unrealized >= 0 ? 'text-positive' : 'text-negative'}>{formatCurrency(summary.unrealized)}</strong>
+              <strong className={summary.unrealizedReturn >= 0 ? 'text-positive' : 'text-negative'}>{formatPercent(summary.unrealizedReturn)}</strong>
+            </div>
           </div>
           <div className="metric-card metric-card-quantity">
             <span>Holdings</span>

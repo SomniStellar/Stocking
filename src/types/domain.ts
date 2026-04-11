@@ -68,6 +68,9 @@ export interface BenchmarkComparisonCard {
   value: number
   deltaFromPortfolio: number
   caption: string
+  isEnabled: boolean
+  isRenderable: boolean
+  isDefault: boolean
 }
 
 export interface HoldingRow {
@@ -119,6 +122,3 @@ export interface WatchlistDraft {
   virtualEntryPrice: number
   tags: string
 }
-
-
-

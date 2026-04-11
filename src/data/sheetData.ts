@@ -4,6 +4,7 @@
   WatchlistRow,
 } from '../types/domain'
 import type { SpreadsheetSnapshot } from '../types/sheets'
+import { normalizeTags } from '../features/holdings/holdingUtils'
 
 function toNumber(value: number | string | undefined) {
   const parsed = Number(value ?? 0)
@@ -57,7 +58,7 @@ export function buildHoldingRows(snapshot: SpreadsheetSnapshot): HoldingRow[] {
       const return1Y = price1Y === 0 ? 0 : ((closeyest - price1Y) / price1Y) * 100
       const return3Y = price3Y === 0 ? 0 : ((closeyest - price3Y) / price3Y) * 100
       const return5Y = price5Y === 0 ? 0 : ((closeyest - price5Y) / price5Y) * 100
-      const mergedTags = [...new Set(rows.flatMap((row) => String(row.tags ?? '').split(',').map((tag) => tag.trim()).filter(Boolean)))].join(', ')
+      const mergedTags = normalizeTags(rows.flatMap((row) => String(row.tags ?? '').split(',')).join(','))
       const explicitOrder = rows
         .map((row) => toNumber(row.display_order))
         .filter((value) => value > 0)
@@ -99,6 +100,6 @@ export function buildWatchlistRows(snapshot: SpreadsheetSnapshot): WatchlistRow[
     virtualQty: toNumber(row.virtual_qty),
     virtualEntryPrice: toNumber(row.virtual_entry_price),
     closeyest: toNumber(monitorMap.get(row.ticker)?.closeyest),
-    tags: row.tags ?? '',
+    tags: normalizeTags(row.tags ?? ''),
   }))
 }
