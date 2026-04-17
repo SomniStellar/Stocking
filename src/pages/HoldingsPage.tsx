@@ -184,7 +184,7 @@ export function HoldingsPage() {
     }
 
     if (costInput <= 0) {
-      setFormMessage(costInputMode === 'total' ? 'Total cost must be greater than 0.' : 'Average price must be greater than 0.')
+      setFormMessage(costInputMode === 'total' ? 'Total price must be greater than 0.' : 'Average price must be greater than 0.')
       return
     }
 
@@ -309,8 +309,8 @@ export function HoldingsPage() {
           </div>
         </div>
 
-        <div className="metric-grid holdings-metric-grid">
-          <div className="metric-card metric-card-ticker-input">
+        <div className="metric-grid holdings-metric-grid holding-input-grid">
+          <div className="metric-card holding-input-cell holding-input-ticker">
             <span>Ticker</span>
             <input
               id={`${mode}-holding-ticker`}
@@ -321,7 +321,7 @@ export function HoldingsPage() {
             />
           </div>
 
-          <div className="metric-card metric-card-input">
+          <div className="metric-card holding-input-cell holding-input-cost">
             <div
               className="field-label-inline field-label-inline-clickable field-label-inline-mode-toggle"
               onClick={toggleCostMode}
@@ -334,21 +334,20 @@ export function HoldingsPage() {
                 }
               }}
             >
-              <span>{costInputMode === 'avg' ? 'Average Price' : 'Total Price'}</span>
+              <span>{costInputMode === 'avg' ? 'Avg Price' : 'Total Price'}</span>
             </div>
             <input
               className="text-input"
               type="number"
               min="0"
-              step="0.000001"
+              step="0.01"
               value={costInput || ''}
               onChange={(event) => setCostInput(Number(event.target.value) || 0)}
               placeholder={costInputMode === 'avg' ? '185.25' : '1945.13'}
             />
           </div>
 
-          <div className="metric-card metric-card-toggle">
-            <span>Side</span>
+          <div className="metric-card holding-input-cell holding-input-side">
             <button
               className={`toggle-button toggle-button-side ${draft.side === 'BUY' ? 'toggle-button-buy' : 'toggle-button-sell'}`}
               type="button"
@@ -358,21 +357,21 @@ export function HoldingsPage() {
             </button>
           </div>
 
-          <div className="metric-card metric-card-input metric-card-quantity">
+          <div className="metric-card holding-input-cell holding-input-quantity">
             <span>Quantity</span>
             <input
               id={`${mode}-holding-quantity`}
               className="text-input"
               type="number"
               min="0"
-              step="0.000001"
+              step="0.0001"
               value={draft.quantity || ''}
               onChange={(event) => setDraft((current) => ({ ...current, quantity: Number(event.target.value) || 0 }))}
-              placeholder="10.500000"
+              placeholder="10.5000"
             />
           </div>
 
-          <div className="metric-card metric-card-input metric-card-value">
+          <div className="metric-card holding-input-cell holding-input-tags">
             <span>Tags</span>
             <input
               id={`${mode}-holding-tags`}
@@ -383,8 +382,7 @@ export function HoldingsPage() {
             />
           </div>
 
-          <div className="metric-card metric-card-actions metric-card-period-list">
-            <span>{isEditing ? 'Edit' : 'Create'}</span>
+          <div className="metric-card holding-input-cell holding-input-save">
             <button className="primary-button" type="submit" disabled={!spreadsheet || busyState !== 'idle'}>
               {busyState === 'writing' ? 'Saving...' : 'Save'}
             </button>
@@ -432,7 +430,6 @@ export function HoldingsPage() {
             ))}
           </div>
           <div className="card-icon-actions">
-
             <button className="icon-button" type="button" onClick={() => openEditForm(item)} disabled={busyState !== 'idle'} aria-label={`Edit ${item.ticker}`}>
               <EditIcon />
             </button>
@@ -443,50 +440,52 @@ export function HoldingsPage() {
         </div>
 
         <div className="metric-grid holdings-metric-grid holdings-card-grid">
-          <div className="metric-card metric-card-ticker-display">
+          <div className="metric-card holding-cell holding-cell-name">
             <strong>{item.name || item.ticker}</strong>
             <small>{item.ticker}</small>
           </div>
-          <div className="metric-card metric-card-price metric-card-paired">
-            <div className="metric-pair-grid">
-              <div className="metric-pair-block">
-                <span>Price</span>
+          <div className="metric-card holding-cell holding-cell-stack holding-cell-price">
+            <span>Price / Avg</span>
+            <div className="metric-stack3-values">
+              <div className="metric-stack3-line">
                 <strong>{formatCurrency(item.closeyest)}</strong>
               </div>
-              <div className="metric-pair-block">
-                <span>Avg</span>
+              <div className="metric-stack3-line">
                 <strong>{formatCurrency(item.avgPrice)}</strong>
               </div>
             </div>
           </div>
-          <div className="metric-card metric-card-profit metric-card-profit-compact">
+          <div className="metric-card holding-cell holding-cell-stack holding-cell-profit">
             <span>P/L</span>
-            <div className="metric-profit-values">
-              <strong className={item.unrealizedProfit >= 0 ? 'text-positive' : 'text-negative'}>
-                {formatCurrency(item.unrealizedProfit)}
-              </strong>
-              <strong className={item.unrealizedReturn >= 0 ? 'text-positive' : 'text-negative'}>
-                {formatPercent(item.unrealizedReturn)}
-              </strong>
+            <div className="metric-stack3-values">
+              <div className="metric-stack3-line">
+                <strong className={item.unrealizedProfit >= 0 ? 'text-positive' : 'text-negative'}>
+                  {formatCurrency(item.unrealizedProfit)}
+                </strong>
+              </div>
+              <div className="metric-stack3-line">
+                <strong className={item.unrealizedReturn >= 0 ? 'text-positive' : 'text-negative'}>
+                  {formatPercent(item.unrealizedReturn)}
+                </strong>
+              </div>
             </div>
           </div>
-          <div className="metric-card metric-card-quantity">
+          <div className="metric-card holding-cell holding-cell-quantity">
             <span>Quantity</span>
             <strong>{formatQuantity(item.quantity)}</strong>
           </div>
-          <div className="metric-card metric-card-value metric-card-paired">
-            <div className="metric-pair-grid">
-              <div className="metric-pair-block">
-                <span>Value</span>
+          <div className="metric-card holding-cell holding-cell-stack holding-cell-value">
+            <span>Value / Inv.</span>
+            <div className="metric-stack3-values">
+              <div className="metric-stack3-line">
                 <strong>{formatCurrency(item.marketValue)}</strong>
               </div>
-              <div className="metric-pair-block">
-                <span>Invested</span>
+              <div className="metric-stack3-line">
                 <strong>{formatCurrency(item.invested)}</strong>
               </div>
             </div>
           </div>
-          <div className="metric-card metric-card-period-list">
+          <div className="metric-card holding-cell holding-cell-period">
             <div className="metric-period-line"><span>YTD</span><strong className={item.ytdReturn >= 0 ? 'text-positive' : 'text-negative'}>{formatPercent(item.ytdReturn)}</strong></div>
             <div className="metric-period-line"><span>3Y</span><strong className={item.return3Y >= 0 ? 'text-positive' : 'text-negative'}>{formatPercent(item.return3Y)}</strong></div>
             <div className="metric-period-line"><span>5Y</span><strong className={item.return5Y >= 0 ? 'text-positive' : 'text-negative'}>{formatPercent(item.return5Y)}</strong></div>
@@ -499,36 +498,37 @@ export function HoldingsPage() {
   function renderSummaryCard() {
     return (
       <article className="entity-card entity-card-summary" data-item-id="portfolio-summary">
-        <div className="entity-card-topline entity-card-topline-summary">
-          <strong className="summary-card-title">Portfolio</strong>
+        <div className="entity-card-topline entity-card-topline-summary holding-summary-topline">
           <span className="tag-chip tag-chip-total">Total</span>
         </div>
-
         <div className="metric-grid holdings-metric-grid holdings-summary-grid">
-          <div className="metric-card metric-card-ticker-display">
+          <div className="metric-card holding-summary-cell holding-summary-label">
             <strong>Portfolio</strong>
-            <small>Total</small>
           </div>
-          <div className="metric-card metric-card-price">
+          <div className="metric-card holding-summary-cell holding-summary-value">
             <span>Value</span>
             <strong>{formatCurrency(summary.marketValue)}</strong>
           </div>
-          <div className="metric-card metric-card-profit metric-card-profit-compact">
+          <div className="metric-card holding-summary-cell holding-cell-stack holding-summary-profit">
             <span>P/L</span>
-            <div className="metric-profit-values">
-              <strong className={summary.unrealized >= 0 ? 'text-positive' : 'text-negative'}>{formatCurrency(summary.unrealized)}</strong>
-              <strong className={summary.unrealizedReturn >= 0 ? 'text-positive' : 'text-negative'}>{formatPercent(summary.unrealizedReturn)}</strong>
+            <div className="metric-stack3-values">
+              <div className="metric-stack3-line">
+                <strong className={summary.unrealized >= 0 ? 'text-positive' : 'text-negative'}>{formatCurrency(summary.unrealized)}</strong>
+              </div>
+              <div className="metric-stack3-line">
+                <strong className={summary.unrealizedReturn >= 0 ? 'text-positive' : 'text-negative'}>{formatPercent(summary.unrealizedReturn)}</strong>
+              </div>
             </div>
           </div>
-          <div className="metric-card metric-card-quantity">
+          <div className="metric-card holding-summary-cell holding-summary-holdings">
             <span>Holdings</span>
             <strong>{summary.positions}</strong>
           </div>
-          <div className="metric-card metric-card-value">
+          <div className="metric-card holding-summary-cell holding-summary-invested">
             <span>Invested</span>
             <strong>{formatCurrency(summary.invested)}</strong>
           </div>
-          <div className="metric-card metric-card-period-list">
+          <div className="metric-card holding-summary-cell holding-summary-period">
             <div className="metric-period-line"><span>YTD</span><strong className={summary.ytd >= 0 ? 'text-positive' : 'text-negative'}>{formatPercent(summary.ytd)}</strong></div>
             <div className="metric-period-line"><span>3Y</span><strong className={summary.threeYear >= 0 ? 'text-positive' : 'text-negative'}>{formatPercent(summary.threeYear)}</strong></div>
             <div className="metric-period-line"><span>5Y</span><strong className={summary.fiveYear >= 0 ? 'text-positive' : 'text-negative'}>{formatPercent(summary.fiveYear)}</strong></div>
@@ -537,11 +537,10 @@ export function HoldingsPage() {
       </article>
     )
   }
-
   function renderAddSlotCard() {
     return (
       <article
-        className="entity-card entity-card-add-slot"
+        className="entity-card entity-card-add-slot entity-card-add-slot-holdings"
         data-item-id="holding-add-slot"
         onClick={openCreateForm}
         role="button"
@@ -584,9 +583,12 @@ export function HoldingsPage() {
             </div>
           ) : null}
 
-          <div className={`entity-card-grid entity-card-grid-holdings${draggingTicker ? ' entity-card-grid-drag-active' : ''}`}>
+          <div className="entity-card-grid entity-card-grid-holdings-top">
             {renderSummaryCard()}
             {showHoldingForm ? renderEditorCard('create') : renderAddSlotCard()}
+          </div>
+
+          <div className={`entity-card-grid entity-card-grid-holdings${draggingTicker ? ' entity-card-grid-drag-active' : ''}`}>
             {filteredHoldings.map((item) => (
               editingTicker === item.ticker ? renderEditorCard('edit', item.ticker) : renderHoldingCard(item)
             ))}

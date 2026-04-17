@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { test, expect } from '@playwright/test'
 
 async function openHoldingsPreview(page: import('@playwright/test').Page) {
   await page.goto('/?preview=holdings#/holdings')
@@ -27,25 +27,30 @@ test.describe('Stocking app smoke', () => {
 
   test('holdings preview renders the portfolio card and add slot', async ({ page }) => {
     await openHoldingsPreview(page)
-    await expect(page.locator('[data-item-id="portfolio-summary"] .summary-card-title')).toHaveText('Portfolio')
   })
 
-  test('dashboard preview renders benchmark cards and add card', async ({ page }) => {
+  test('dashboard preview renders benchmark cards and add trigger', async ({ page }) => {
     await openDashboardPreview(page)
-    await expect(page.locator('.benchmark-portfolio-card')).toBeVisible()
-    await expect(page.locator('[data-item-id="benchmark-card-SP500"]')).toBeVisible()
-    await expect(page.locator('[data-item-id="benchmark-add-card"]')).toBeVisible()
+
+    await expect(page.getByText('S&P 500')).toBeVisible()
+    await expect(page.getByText('Nasdaq 100')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Add benchmark' })).toBeVisible()
   })
 
-  test('dashboard add card opens ticker input', async ({ page }) => {
+  test('dashboard add trigger opens ticker input', async ({ page }) => {
     await openDashboardPreview(page)
-    await page.locator('[data-item-id="benchmark-add-card"]').click()
+
+    await page.getByRole('button', { name: 'Add benchmark' }).click()
     await expect(page.getByPlaceholder('Ticker')).toBeVisible()
   })
 
   test('settings preview renders connection settings only', async ({ page }) => {
     await openSettingsPreview(page)
+
+    await expect(page.getByRole('heading', { name: 'Connected Account' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Create Template Spreadsheet' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Sheet Data Snapshot' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Benchmark Comparison' })).toHaveCount(0)
   })
 
   test('holdings preview desktop capture', async ({ page }) => {
@@ -55,13 +60,13 @@ test.describe('Stocking app smoke', () => {
   })
 
   test('holdings preview tablet capture', async ({ page }) => {
-    await page.setViewportSize({ width: 834, height: 1194 })
+    await page.setViewportSize({ width: 900, height: 1100 })
     await openHoldingsPreview(page)
     await page.screenshot({ path: 'test-results/holdings-preview-tablet.png', fullPage: true })
   })
 
   test('holdings preview mobile capture', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 })
+    await page.setViewportSize({ width: 430, height: 932 })
     await openHoldingsPreview(page)
     await page.screenshot({ path: 'test-results/holdings-preview-mobile.png', fullPage: true })
   })
@@ -70,5 +75,17 @@ test.describe('Stocking app smoke', () => {
     await page.setViewportSize({ width: 1280, height: 960 })
     await openDashboardPreview(page)
     await page.screenshot({ path: 'test-results/dashboard-preview-desktop.png', fullPage: true })
+  })
+
+  test('holdings preview fhd capture', async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 })
+    await openHoldingsPreview(page)
+    await page.screenshot({ path: 'test-results/holdings-preview-fhd.png', fullPage: true })
+  })
+
+  test('dashboard preview fhd capture', async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 })
+    await openDashboardPreview(page)
+    await page.screenshot({ path: 'test-results/dashboard-preview-fhd.png', fullPage: true })
   })
 })

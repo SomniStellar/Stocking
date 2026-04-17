@@ -50,9 +50,7 @@ export function AppLayout() {
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand-block">
-          <p className="eyebrow">US Stock Monitor</p>
-          <h1>Stocking</h1>
-          <p className="brand-copy">Snapshot-based Google Sheets portfolio workspace.</p>
+          <h1>Stock_ing</h1>
         </div>
 
         <nav className="nav-menu" aria-label="Primary">
@@ -71,7 +69,6 @@ export function AppLayout() {
       <main className="main-panel">
         <header className="topbar">
           <div>
-            <p className="eyebrow">Version 0.3</p>
             <h2>Portfolio Workspace</h2>
           </div>
           <div className="topbar-cluster">

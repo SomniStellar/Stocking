@@ -1,90 +1,90 @@
-# 화면별 UI 명세서
-
+# UI Spec
 ## Dashboard
-목적:
-- 포트폴리오 요약과 주요지표 비교를 한 화면에서 제공한다.
+Purpose:
+- Show portfolio summary and benchmark comparison on one page.
 
-현재 구성:
-- 포트폴리오 요약 카드
-- 비교 카드
-- 기간 토글: `YTD`, `1Y`, `3Y`, `5Y`
-- 첫 번째 `Portfolio` 기준 카드
-- 마지막 `Add Benchmark` 빠른 추가 카드
-- 카드 전체 클릭 기반 benchmark 활성화/비활성화
-- custom benchmark 카드별 수정/삭제 버튼
-- benchmark 인라인 편집 패널
-- 로드 실패 메시지
-- fallback 사용 상태 문구
+Current layout:
+- Top summary cards: Portfolio Value, Invested Cost, Unrealized P/L, Return
+- Portfolio Value and Invested Cost cards do not show helper captions
+- Benchmark comparison section
+- Period toggle: `YTD`, `1Y`, `3Y`, `5Y`
+- First comparison card: `Portfolio`
+- Comparison benchmark cards
+- `Add Benchmark` action in the section title area
+- Inline custom benchmark edit panel
+- Validation and fallback status caption when needed
 
-다음 구성:
-- 시계열 선형 그래프
-
-규칙:
-- 사용자 불필요 문구는 제거한다.
-- 개발/테스트용 문구만 `[Dev/Test]` 표기와 함께 유지한다.
-- 비교 카드를 그래프보다 먼저 배치한다.
-- 현재는 비교 카드만 구현 기준으로 본다.
-- `Portfolio` 카드는 기준 수익률 표시용으로 파란 계열 톤을 사용한다.
-- benchmark 카드는 해당 benchmark 수익률을 배경 톤으로 표시한다.
-- benchmark 카드 내부 우선순위는 `항목명 >= 손익률 차이 >= 손익 > 손익률 차이 명` 기준으로 둔다.
-- benchmark 카드는 `항목명 | 손익`, `To Portfolio | 손익률 차이` 2행 구조를 사용한다.
-- 손익률 차이는 텍스트 강조로 처리하고, 손익률 차이 명은 저강도 라벨로 둔다.
-- benchmark 활성화/비활성화는 별도 토글 버튼이 아니라 카드 전체 클릭으로 처리한다.
-- 비활성 카드도 클릭 가능성이 보이도록 희미한 색상과 hover 반응을 유지한다.
-- `Add Benchmark` 카드는 Holdings의 add slot처럼 카드 전체 클릭으로 ticker 입력을 연다.
-- custom benchmark 수정은 같은 섹션 아래 인라인 편집 패널에서 처리한다.
-- 그래프는 현재 비교 카드 바로 아래에 이어서 배치하는 것이 기준이다.
-- 로드 실패한 시리즈는 카드 계산에서 제외한다.
-- 그래프와 확대/축소 UI는 2차 범위로 둔다.
+Rules:
+- Keep only `[Dev/Test]` copy that is needed for test or preview verification.
+- Desktop benchmark card grid targets 5 cards per row on full width.
+- Comparison cards use a 3x2 grid.
+- Row 1 column 1 holds the title.
+- Row 1 column 2 remains empty unless title sizing requires visual merge.
+- `Portfolio` card uses this structure.
+  - Row 1: `Portfolio` | empty
+  - Row 2: empty | return
+  - Row 3: empty | unrealized profit amount
+- Benchmark cards use this structure.
+  - Row 1: benchmark name | empty
+  - Row 2: empty | benchmark return
+  - Row 3: low-priority delta label | portfolio minus benchmark return in `%p`
+- The delta value is color-emphasized by sign.
+- Clicking the benchmark card toggles active or inactive state.
+- Inactive state keeps the card visible but removes strong color and reduces opacity.
+- `Add Benchmark` opens from the section title area next to `Benchmark Comparison`.
+- The future graph area belongs directly below the benchmark card section.
 
 ## Holdings
-목적:
-- 보유 종목과 포트폴리오 요약을 조회, 편집, 정렬한다.
+Purpose:
+- Review, edit, and reorder holdings and see portfolio summary in the same card system.
 
-구성:
-- 포트폴리오 요약 카드
-- 보유 카드 목록
-- 태그 필터
-- 정렬 제어
-- Add Slot
+Current layout:
+- Top sector: centered `Portfolio` card and `Add Holding` card only
+- Low sector: holding cards only
+- Tag filter in the section header
 
-규칙:
-- 일반 보유 카드는 기본적으로 2행 3열 지표 배치를 사용한다.
-- 가로 폭이 줄면 `티커|수량`, `Price/Avg`, `Value/Invested`, `P/L|기간손익률` 구조로 전환한다.
-- 아주 좁은 폭에서도 holdings 카드는 위 구조를 유지하되 각 행 내부 정렬을 우선 보정한다.
-- 카드 내부 열 너비는 통일하고, 첫 열만 약간 좁게 둘 수 있다.
-- 각 지표 라벨은 카드 상단 정렬을 유지한다.
-- ticker, quantity 값은 남은 공간의 세로 중앙 정렬을 사용한다.
-- price, value 계열 값도 라벨 아래 남은 공간에서 세로 중앙 정렬을 사용한다.
-- `Price / Avg`, `Value / Invested`는 한 칸 안에서 균형 있게 4분할한다.
-- `P/L` 금액과 변화율은 같은 강도로 표시한다.
-- 모바일에서는 `P/L` 값을 세로 배치하고, 태블릿/데스크톱에서는 가로 배치를 사용한다.
-- `Average Price`, `Total Price` 전환은 클릭 가능성이 분명하게 보여야 한다.
-- `Total Price` 모드 전환 시 입력값도 총액 기준으로 함께 변환한다.
-- 태그는 대소문자를 구분하지 않고 정규화한다.
+Rules:
+- All cards use the same fixed size.
+- All holdings cards use 2 rows by 3 columns.
+- Holdings is split into two sectors and both sectors use the same width.
+- The number of cards shown on one row depends on the fixed card width.
+- Top sector contains only the `Portfolio` card and the `Add Holding` card.
+- Low sector contains only holding cards.
+- `Portfolio` card uses this structure.
+  - Row 1 column 1: `Portfolio`
+  - Row 1 column 2: `Value`
+  - Row 1 column 3: 3-row `P/L` block with label, profit amount, return
+  - Row 2 column 1: `Holdings`
+  - Row 2 column 2: `Invested`
+  - Row 2 column 3: internal 3-row by 2-column period block for `YTD`, `3Y`, `5Y`
+- `Add Holding` card is an input form and each occupied cell uses 2 rows: label and input/control.
+  - Row 1 column 1: `Ticker`
+  - Row 1 column 2: `Total Price` <-> `Avg Price` clickable toggle. Price input accepts up to 2 decimal places.
+  - Row 1 column 3: `Buy` <-> `Sell` segmented control, no extra label
+  - Row 2 column 1: `Quantity`. Quantity input accepts up to 4 decimal places.
+  - Row 2 column 2: `Tags`, case-insensitive
+  - Row 2 column 3: `Save` action, no extra label
+- Holding card uses this structure.
+  - Row 1 column 1: 2-row `Name`, `Ticker`
+  - Row 1 column 2: 3-row `Price / Avg`, `Price`, `Avg`
+  - Row 1 column 3: 3-row `P/L`, profit amount, return
+  - Row 2 column 1: `Quantity`. Quantity input accepts up to 4 decimal places.
+  - Row 2 column 2: 3-row `Value / Inv.`, `Value`, `Invested`
+  - Row 2 column 3: internal 3-row by 2-column period block for `YTD`, `3Y`, `5Y`
+- Tags are case-insensitive.
+- Average Price / Total Price toggle must remain visibly clickable.
 
 ## Settings
-목적:
-- 계정, 스프레드시트 연결, 앱 설정을 관리한다.
+Purpose:
+- Account, spreadsheet connection, and app-level actions only.
 
-구성:
-- 연결된 스프레드시트 정보
-- 템플릿 생성
-- 시트 데이터 새로고침/리셋
-- 기존 시트 연결
-- 런타임 메시지
-
-규칙:
-- benchmark 관리는 Settings가 아니라 Dashboard 비교 섹션에서 처리한다.
+Rules:
+- Benchmark management does not live in Settings.
 
 ## Login
-목적:
-- Google 로그인 및 연결 상태 확인
+Purpose:
+- Simple sign-in entry and connection status check.
 
-구성:
-- 단순 중앙 레이아웃
-- 로그인 버튼
-- Dev/Test 상태 문구
-
-규칙:
-- 사용자 불필요 문구는 줄이되, 개발/테스트에 필요한 문구는 `[Dev/Test]` 첨언과 함께 유지한다.
+Rules:
+- Use a centered minimal layout.
+- Keep only development or test copy that is required and prefix it with `[Dev/Test]`.

@@ -149,7 +149,7 @@ function evaluateRenderableBenchmarks(rows: BenchmarkDefinition[]) {
       return {
         ...row,
         isRenderable: false,
-        exclusionReason: '비교 비활성화',
+        exclusionReason: 'Benchmark disabled',
       }
     }
 
@@ -157,7 +157,7 @@ function evaluateRenderableBenchmarks(rows: BenchmarkDefinition[]) {
       return {
         ...row,
         isRenderable: false,
-        exclusionReason: '중복 benchmark key로 비교 제외',
+        exclusionReason: 'Excluded due to duplicate benchmark key',
       }
     }
 
@@ -165,7 +165,7 @@ function evaluateRenderableBenchmarks(rows: BenchmarkDefinition[]) {
       return {
         ...row,
         isRenderable: false,
-        exclusionReason: '중복 티커로 비교 제외',
+        exclusionReason: 'Excluded due to duplicate ticker',
       }
     }
 
@@ -173,7 +173,7 @@ function evaluateRenderableBenchmarks(rows: BenchmarkDefinition[]) {
       return {
         ...row,
         isRenderable: false,
-        exclusionReason: '미국 외 시장 custom 지표는 비교 제외',
+        exclusionReason: 'Excluded because only US custom benchmarks are supported',
       }
     }
 
@@ -183,7 +183,7 @@ function evaluateRenderableBenchmarks(rows: BenchmarkDefinition[]) {
         return {
           ...row,
           isRenderable: false,
-          exclusionReason: 'custom 지표 최대 3개 초과로 비교 제외',
+          exclusionReason: 'Excluded because the custom benchmark limit was exceeded',
         }
       }
     }
@@ -205,15 +205,15 @@ export function createBenchmarkStatusCaption(
   resolvedSource: BenchmarkResolvedSource,
 ) {
   if (status === 'failed') {
-    return `${name} 로드 실패: 비교에서 제외됨`
+    return `${name} failed to load and was excluded.`
   }
 
   if (resolvedSource === 'fallback' || status === 'fallback') {
-    return `${name} 대체 지표 사용 중`
+    return `${name} is using a fallback ticker.`
   }
 
   if (status === 'retrying') {
-    return `${name} 재시도 중`
+    return `${name} is retrying.`
   }
 
   return ''

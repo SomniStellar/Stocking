@@ -9,7 +9,12 @@ import {
   validateBenchmarkRows,
 } from '../data/benchmarkData'
 import { buildHoldingRows } from '../data/sheetData'
-import { EMPTY_BENCHMARK_FORM, getNextBenchmarkDisplayOrder, toBenchmarkDrafts, validateCustomBenchmarkInput } from '../features/benchmarks/benchmarkDrafts'
+import {
+  EMPTY_BENCHMARK_FORM,
+  getNextBenchmarkDisplayOrder,
+  toBenchmarkDrafts,
+  validateCustomBenchmarkInput,
+} from '../features/benchmarks/benchmarkDrafts'
 import { useGoogleWorkspace } from '../features/google/GoogleWorkspaceContext'
 import { AddIcon, CloseIcon, DeleteIcon, EditIcon } from '../features/holdings/holdingIcons'
 import type { BenchmarkComparisonCard, ComparisonPeriod } from '../types/domain'
@@ -40,13 +45,13 @@ export function DashboardPage() {
   const totalYield = totalInvested === 0 ? 0 : (totalProfit / totalInvested) * 100
 
   const benchmarkValidationCaption = benchmarkValidation.duplicateKey
-    ? `중복 benchmark key: ${benchmarkValidation.duplicateKey}`
+    ? `Duplicate benchmark key: ${benchmarkValidation.duplicateKey}`
     : benchmarkValidation.duplicateTicker
-      ? `중복 티커: ${benchmarkValidation.duplicateTicker}`
+      ? `Duplicate ticker: ${benchmarkValidation.duplicateTicker}`
       : benchmarkValidation.invalidMarketKey
-        ? `미국 외 시장 사용자 지표: ${benchmarkValidation.invalidMarketKey}`
+        ? `Only US custom benchmarks are allowed: ${benchmarkValidation.invalidMarketKey}`
         : benchmarkValidation.customLimitExceeded
-          ? '사용자 추가 지표는 최대 3개까지 허용됨'
+          ? 'Up to 3 custom benchmarks are allowed.'
           : null
 
   async function persistBenchmarkDrafts(nextDrafts: ReturnType<typeof toBenchmarkDrafts>) {
@@ -67,18 +72,18 @@ export function DashboardPage() {
     const normalizedTicker = quickAddTicker.trim().toUpperCase()
 
     if (!normalizedTicker) {
-      setQuickAddError('티커를 입력해야 함')
+      setQuickAddError('Ticker is required.')
       return
     }
 
     const validation = validateCustomBenchmarkInput(benchmarkDrafts, normalizedTicker, normalizedTicker, null)
     if (validation.duplicateKey || validation.duplicateTicker) {
-      setQuickAddError('이미 추가된 티커임')
+      setQuickAddError('This ticker is already added.')
       return
     }
 
     if (validation.customLimitExceeded) {
-      setQuickAddError('사용자 추가 지표는 최대 3개까지 허용됨')
+      setQuickAddError('Up to 3 custom benchmarks are allowed.')
       return
     }
 
@@ -131,18 +136,18 @@ export function DashboardPage() {
     const normalizedName = benchmarkForm.name.trim() || normalizedKey
 
     if (!normalizedKey || !normalizedTicker) {
-      setBenchmarkEditorError('benchmark key와 ticker가 필요함')
+      setBenchmarkEditorError('Benchmark key and ticker are required.')
       return
     }
 
     const validation = validateCustomBenchmarkInput(benchmarkDrafts, normalizedKey, normalizedTicker, editingBenchmarkKey)
     if (validation.duplicateKey) {
-      setBenchmarkEditorError('중복 benchmark key는 허용되지 않음')
+      setBenchmarkEditorError('Duplicate benchmark keys are not allowed.')
       return
     }
 
     if (validation.duplicateTicker) {
-      setBenchmarkEditorError('중복 티커는 허용되지 않음')
+      setBenchmarkEditorError('Duplicate tickers are not allowed.')
       return
     }
 
@@ -181,7 +186,7 @@ export function DashboardPage() {
 
   function renderBenchmarkCard(card: BenchmarkComparisonCard) {
     const isMuted = !card.isRenderable || !card.isEnabled || card.status === 'failed'
-    const toneClass = !card.isRenderable || !card.isEnabled || card.status === 'failed'
+    const toneClass = isMuted
       ? 'benchmark-card-tone-neutral'
       : card.value >= 0
         ? 'benchmark-card-tone-positive'
@@ -208,46 +213,42 @@ export function DashboardPage() {
         role="button"
         tabIndex={0}
         aria-pressed={card.isEnabled}
-        aria-label={`${card.name} ${card.isEnabled ? '비활성화' : '활성화'}`}
+        aria-label={`${card.name} ${card.isEnabled ? 'disable benchmark' : 'enable benchmark'}`}
       >
-        <div className="benchmark-card-head">
-          <p className="benchmark-card-title">{card.name}</p>
-          {!card.isDefault ? (
-            <div className="benchmark-card-actions" onClick={(event) => event.stopPropagation()}>
-              <button
-                className="icon-button"
-                type="button"
-                onClick={() => handleStartBenchmarkEdit(card.benchmarkKey)}
-                disabled={busyState !== 'idle'}
-                title="Edit benchmark"
-                aria-label={`${card.name} 수정`}
-              >
-                <EditIcon />
-              </button>
-              <button
-                className="icon-button"
-                type="button"
-                onClick={() => { void handleBenchmarkDelete(card.benchmarkKey) }}
-                disabled={!spreadsheet || busyState !== 'idle'}
-                title="Delete benchmark"
-                aria-label={`${card.name} 삭제`}
-              >
-                <DeleteIcon />
-              </button>
-            </div>
-          ) : null}
-        </div>
+        {!card.isDefault ? (
+          <div className="benchmark-card-actions-inline" onClick={(event) => event.stopPropagation()}>
+            <button
+              className="icon-button"
+              type="button"
+              onClick={() => handleStartBenchmarkEdit(card.benchmarkKey)}
+              disabled={busyState !== 'idle'}
+              title="Edit benchmark"
+              aria-label={`Edit ${card.name}`}
+            >
+              <EditIcon />
+            </button>
+            <button
+              className="icon-button"
+              type="button"
+              onClick={() => { void handleBenchmarkDelete(card.benchmarkKey) }}
+              disabled={!spreadsheet || busyState !== 'idle'}
+              title="Delete benchmark"
+              aria-label={`Delete ${card.name}`}
+            >
+              <DeleteIcon />
+            </button>
+          </div>
+        ) : null}
 
-        <div className="benchmark-card-row benchmark-card-row-primary">
-          <span className="benchmark-card-return-label">Return</span>
+        <div className="benchmark-card-grid benchmark-card-grid-benchmark">
+          <p className="benchmark-card-title">{card.name}</p>
+          <span className="benchmark-card-grid-empty" aria-hidden="true" />
+          <span className="benchmark-card-grid-empty" aria-hidden="true" />
           <strong className="benchmark-card-return-value">
             {card.value >= 0 ? '+' : ''}{card.value.toFixed(2)}%
           </strong>
-        </div>
-
-        <div className="benchmark-card-row benchmark-card-row-secondary">
           <span className="benchmark-card-delta-label">To Portfolio</span>
-          <strong className={deltaClass}>
+          <strong className={['benchmark-card-delta-value', deltaClass].join(' ')}>
             {card.deltaFromPortfolio >= 0 ? '+' : ''}{card.deltaFromPortfolio.toFixed(2)}%p
           </strong>
         </div>
@@ -257,17 +258,74 @@ export function DashboardPage() {
     )
   }
 
+  const benchmarkTitleActions = showQuickAddInput ? (
+    <div className="benchmark-inline-add" onClick={(event) => event.stopPropagation()}>
+      <input
+        className="text-input benchmark-inline-add-input"
+        value={quickAddTicker}
+        onChange={(event) => {
+          setQuickAddTicker(event.target.value)
+          if (quickAddError) {
+            setQuickAddError(null)
+          }
+        }}
+        placeholder={customBenchmarkCount >= 3 ? 'Custom limit reached' : 'Ticker'}
+        disabled={!spreadsheet || busyState !== 'idle' || customBenchmarkCount >= 3}
+      />
+      <button
+        className="primary-button benchmark-inline-add-button"
+        type="button"
+        onClick={() => { void handleQuickAddBenchmark() }}
+        disabled={!spreadsheet || busyState !== 'idle' || customBenchmarkCount >= 3}
+        aria-label="Add benchmark ticker"
+        title="Add benchmark ticker"
+      >
+        <AddIcon />
+      </button>
+      <button
+        className="icon-button benchmark-inline-add-cancel"
+        type="button"
+        onClick={() => {
+          setShowQuickAddInput(false)
+          setQuickAddTicker('')
+          setQuickAddError(null)
+        }}
+        disabled={busyState !== 'idle'}
+        aria-label="Cancel benchmark add"
+      >
+        <CloseIcon />
+      </button>
+    </div>
+  ) : (
+    <button
+      className="icon-button benchmark-header-add-trigger"
+      type="button"
+      onClick={() => {
+        if (spreadsheet && busyState === 'idle' && customBenchmarkCount < 3) {
+          setShowQuickAddInput(true)
+        }
+      }}
+      disabled={!spreadsheet || busyState !== 'idle' || customBenchmarkCount >= 3}
+      aria-label="Add benchmark"
+      title="Add benchmark"
+    >
+      <AddIcon />
+    </button>
+  )
+
   return (
     <div className="page-stack">
       <section className="summary-grid summary-grid-dashboard">
-        <SummaryCard title="Portfolio Value" value={`$${totalValue.toFixed(2)}`} caption="Current holdings snapshot" tone="neutral" />
-        <SummaryCard title="Invested Cost" value={`$${totalInvested.toFixed(2)}`} caption="Current cost basis" tone="neutral" />
-        <SummaryCard title="Unrealized P/L" value={`$${totalProfit.toFixed(2)}`} caption={`${totalYield.toFixed(2)}% return`} tone={totalProfit >= 0 ? 'positive' : 'negative'} />
+        <SummaryCard title="Portfolio Value" value={`$${totalValue.toFixed(2)}`} tone="neutral" />
+        <SummaryCard title="Invested Cost" value={`$${totalInvested.toFixed(2)}`} tone="neutral" />
+        <SummaryCard title="Unrealized P/L" value={`${totalProfit >= 0 ? '+' : '-'}$${Math.abs(totalProfit).toFixed(2)}`} tone={totalProfit >= 0 ? 'positive' : 'negative'} />
+        <SummaryCard title="Return" value={`${totalYield >= 0 ? '+' : ''}${totalYield.toFixed(2)}%`} tone={totalYield >= 0 ? 'positive' : 'negative'} className="summary-card-plain-value" />
       </section>
 
       <SectionCard
         title="Benchmark Comparison"
-        description="Portfolio and benchmark performance are reviewed in one section."
+        titleActions={benchmarkTitleActions}
+        description=""
         actions={(
           <div className="period-toggle-row">
             {COMPARISON_PERIODS.map((period) => (
@@ -287,90 +345,31 @@ export function DashboardPage() {
           <div className="message-box message-box-neutral benchmark-inline-note">{benchmarkValidationCaption}</div>
         ) : null}
 
+        {quickAddError ? (
+          <div className="message-box message-box-neutral benchmark-inline-note">{quickAddError}</div>
+        ) : null}
+
         {!spreadsheet ? (
           <div className="message-box message-box-neutral benchmark-inline-note">[Dev/Test] Spreadsheet not connected. Dashboard preview uses sample benchmark data.</div>
         ) : null}
 
         <div className="summary-grid benchmark-summary-grid">
-          <SummaryCard
-            title="Portfolio"
-            value={`${portfolioReturn >= 0 ? '+' : ''}${portfolioReturn.toFixed(2)}%`}
-            tone="accent"
-            className="benchmark-portfolio-card"
-          />
+          <article className="summary-card benchmark-card summary-card-accent benchmark-portfolio-card">
+            <div className="benchmark-card-grid benchmark-card-grid-portfolio">
+              <p className="benchmark-card-title">Portfolio</p>
+              <span className="benchmark-card-grid-empty" aria-hidden="true" />
+              <span className="benchmark-card-grid-empty" aria-hidden="true" />
+              <strong className="benchmark-card-return-value">
+                {portfolioReturn >= 0 ? '+' : ''}{portfolioReturn.toFixed(2)}%
+              </strong>
+              <span className="benchmark-card-grid-empty" aria-hidden="true" />
+              <strong className={totalProfit >= 0 ? 'benchmark-card-amount-value benchmark-card-delta-positive' : 'benchmark-card-amount-value benchmark-card-delta-negative'}>
+                {totalProfit >= 0 ? '+' : '-'}${Math.abs(totalProfit).toFixed(2)}
+              </strong>
+            </div>
+          </article>
 
           {comparisonCards.map((card) => renderBenchmarkCard(card))}
-
-          <article
-            className={`summary-card benchmark-add-card ${showQuickAddInput ? 'benchmark-add-card-open' : 'benchmark-add-card-closed'}`}
-            data-item-id="benchmark-add-card"
-            onClick={() => {
-              if (!showQuickAddInput && spreadsheet && busyState === 'idle' && customBenchmarkCount < 3) {
-                setShowQuickAddInput(true)
-              }
-            }}
-            onKeyDown={(event) => {
-              if (!showQuickAddInput && (event.key === 'Enter' || event.key === ' ')) {
-                event.preventDefault()
-                if (spreadsheet && busyState === 'idle' && customBenchmarkCount < 3) {
-                  setShowQuickAddInput(true)
-                }
-              }
-            }}
-            role={showQuickAddInput ? undefined : 'button'}
-            tabIndex={showQuickAddInput ? undefined : 0}
-            aria-label={showQuickAddInput ? undefined : 'Add benchmark'}
-          >
-            {showQuickAddInput ? (
-              <>
-                <div className="summary-card-head">
-                  <p>Add Benchmark</p>
-                  <button
-                    className="icon-button"
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      setShowQuickAddInput(false)
-                      setQuickAddError(null)
-                      setQuickAddTicker('')
-                    }}
-                    disabled={busyState !== 'idle'}
-                    aria-label="Close benchmark quick add"
-                  >
-                    <CloseIcon />
-                  </button>
-                </div>
-                <div className="benchmark-add-card-form" onClick={(event) => event.stopPropagation()}>
-                  <input
-                    className="text-input"
-                    value={quickAddTicker}
-                    onChange={(event) => {
-                      setQuickAddTicker(event.target.value)
-                      if (quickAddError) {
-                        setQuickAddError(null)
-                      }
-                    }}
-                    placeholder={customBenchmarkCount >= 3 ? 'Custom limit reached' : 'Ticker'}
-                    disabled={!spreadsheet || busyState !== 'idle' || customBenchmarkCount >= 3}
-                  />
-                  <button
-                    className="primary-button"
-                    type="button"
-                    onClick={() => { void handleQuickAddBenchmark() }}
-                    disabled={!spreadsheet || busyState !== 'idle' || customBenchmarkCount >= 3}
-                  >
-                    Add
-                  </button>
-                </div>
-                <span className="benchmark-card-caption">{quickAddError ?? (customBenchmarkCount >= 3 ? '사용자 추가 지표는 최대 3개까지 허용됨' : '')}</span>
-              </>
-            ) : (
-              <div className="benchmark-add-card-launcher">
-                <AddIcon />
-                <strong>Add Benchmark</strong>
-              </div>
-            )}
-          </article>
         </div>
 
         {editingBenchmarkKey ? (

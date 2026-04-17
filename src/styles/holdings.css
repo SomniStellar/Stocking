@@ -1,0 +1,263 @@
+.entity-card-topline-summary {
+  margin-bottom: 2px;
+}
+
+.entity-card-grid-holdings-top,
+.entity-card-grid-holdings {
+  width: min(100%, 1290px);
+  max-width: 1290px;
+}
+
+.entity-card-grid-holdings-top {
+  margin: 0 auto;
+  justify-content: center;
+  grid-template-columns: repeat(2, 420px) !important;
+  gap: 14px;
+}
+
+.entity-card-grid-holdings {
+  margin: 0 auto;
+  justify-content: center;
+  grid-template-columns: repeat(3, 420px) !important;
+  gap: 14px;
+}
+
+.entity-card-grid-holdings-top > .entity-card,
+.entity-card-grid-holdings > .entity-card {
+  width: 420px;
+  min-width: 420px;
+  max-width: 420px;
+}
+
+.holding-input-grid,
+.holdings-card-grid,
+.holding-summary-topline {
+  justify-content: flex-end;
+  min-height: 32px;
+  margin-bottom: 6px;
+}
+
+.holdings-summary-grid {
+  grid-template-columns: minmax(0, 0.98fr) minmax(0, 1.12fr) minmax(0, 1.16fr) !important;
+  gap: 14px;
+}
+
+.holding-input-grid {
+  grid-template-areas:
+    'ticker cost side'
+    'quantity tags save';
+}
+
+.holdings-card-grid {
+  grid-template-areas:
+    'name price profit'
+    'quantity value period';
+}
+
+.holdings-summary-grid {
+  grid-template-areas:
+    'label value profit'
+    'holdings invested period';
+}
+
+.holding-input-cell,
+.holding-cell,
+.holding-summary-cell {
+  min-height: 118px;
+  align-content: stretch;
+}
+
+.holding-input-ticker { grid-area: ticker; }
+.holding-input-cost { grid-area: cost; }
+.holding-input-side { grid-area: side; }
+.holding-input-quantity { grid-area: quantity; }
+.holding-input-tags { grid-area: tags; }
+.holding-input-save { grid-area: save; }
+
+.holding-cell-name { grid-area: name; }
+.holding-cell-price { grid-area: price; }
+.holding-cell-profit { grid-area: profit; }
+.holding-cell-quantity { grid-area: quantity; }
+.holding-cell-value { grid-area: value; }
+.holding-cell-period { grid-area: period; }
+
+.holding-summary-label { grid-area: label; }
+.holding-summary-value { grid-area: value; }
+.holding-summary-profit { grid-area: profit; }
+.holding-summary-holdings { grid-area: holdings; }
+.holding-summary-invested { grid-area: invested; }
+.holding-summary-period { grid-area: period; }
+
+.holding-cell-name,
+.holding-cell-quantity,
+.holding-summary-label,
+.holding-summary-holdings,
+.holding-summary-value,
+.holding-summary-invested {
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.holding-cell-name strong,
+.holding-summary-label strong {
+  align-self: start;
+}
+
+.holding-cell-name small,
+.holding-cell-quantity strong,
+.holding-summary-holdings strong,
+.holding-summary-value strong,
+.holding-summary-invested strong {
+  align-self: center;
+}
+
+.holding-cell-stack,
+.holding-summary-profit {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  align-content: stretch;
+}
+
+.holding-cell-stack > span,
+.holding-summary-profit > span {
+  align-self: start;
+}
+
+.metric-stack3-values {
+  display: grid;
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  min-height: 100%;
+}
+
+.metric-stack3-line {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  align-content: stretch;
+}
+
+.metric-stack3-line > span {
+  color: rgba(245, 239, 226, 0.72);
+  font-size: 0.82rem;
+  line-height: 1.05;
+}
+
+.metric-stack3-line strong {
+  align-self: center;
+  justify-self: end;
+  width: 100%;
+  text-align: right;
+}
+
+.holding-input-side,
+.holding-input-save {
+  align-content: center;
+}
+
+.holding-input-side > span,
+.holding-input-save > span {
+  display: none;
+}
+
+.holding-input-side .toggle-button,
+.holding-input-save .primary-button {
+  align-self: center;
+}
+
+.holding-input-cost .field-label-inline-mode-toggle {
+  border-style: solid;
+}
+
+.holding-input-cost input[type='number']::-webkit-outer-spin-button,
+.holding-input-cost input[type='number']::-webkit-inner-spin-button,
+.holding-input-quantity input[type='number']::-webkit-outer-spin-button,
+.holding-input-quantity input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.holding-input-cost input[type='number'],
+.holding-input-quantity input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.holding-cell-period,
+.holding-summary-period {
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  align-content: stretch;
+}
+
+.holding-cell-period .metric-period-line,
+.holding-summary-period .metric-period-line {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.holding-cell-period .metric-period-line > span,
+.holding-summary-period .metric-period-line > span {
+  width: 34px;
+  line-height: 1.05;
+}
+
+.holding-cell-period .metric-period-line strong,
+.holding-summary-period .metric-period-line strong {
+  display: block;
+  width: 100%;
+  text-align: right;
+  line-height: 1.05;
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1290px) {
+  .entity-card-grid-holdings {
+    width: min(100%, 854px);
+    max-width: 854px;
+    grid-template-columns: repeat(2, 420px) !important;
+  }
+
+  .entity-card-grid-holdings-top {
+    width: min(100%, 854px);
+    max-width: 854px;
+  }
+}
+
+@media (max-width: 880px) {
+  .entity-card-grid-holdings-top,
+  .entity-card-grid-holdings {
+    width: min(100%, 420px);
+    max-width: 420px;
+    grid-template-columns: 420px !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .entity-card-grid-holdings-top,
+  .entity-card-grid-holdings {
+    width: 100%;
+    max-width: 100%;
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .entity-card-grid-holdings-top > .entity-card,
+  .entity-card-grid-holdings > .entity-card {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 560px) {
+  .holding-input-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+
+
+

@@ -16,7 +16,7 @@ export default defineConfig({
     video: 'retain-on-failure',
   },
   webServer: {
-    command: 'npm.cmd run dev',
+    command: 'npm.cmd run dev -- --host 127.0.0.1 --port 4173 --strictPort --base=/Stocking/',
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
