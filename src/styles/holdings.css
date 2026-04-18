@@ -2,19 +2,11 @@
   margin-bottom: 2px;
 }
 
-.entity-card-grid-holdings-top,
-.entity-card-grid-holdings {
-  width: min(100%, 1290px);
-  max-width: 1290px;
-}
-
 .entity-card-grid-holdings-top {
-  grid-template-columns: repeat(2, 420px) !important;
   gap: 14px;
 }
 
 .entity-card-grid-holdings {
-  grid-template-columns: repeat(3, 420px) !important;
   gap: 14px;
 }
 
@@ -205,38 +197,6 @@
   line-height: 1.05;
   font-size: 0.88rem;
   font-variant-numeric: tabular-nums;
-}
-
-@media (max-width: 1290px) {
-  .entity-card-grid-holdings {
-    width: min(100%, 854px);
-    max-width: 854px;
-    grid-template-columns: repeat(2, 420px) !important;
-  }
-
-  .entity-card-grid-holdings-top {
-    width: min(100%, 854px);
-    max-width: 854px;
-  }
-}
-
-@media (max-width: 880px) {
-  .entity-card-grid-holdings-top,
-  .entity-card-grid-holdings {
-    width: min(100%, 420px);
-    max-width: 420px;
-    grid-template-columns: 420px !important;
-  }
-}
-
-@media (max-width: 430px) {
-  .entity-card-grid-holdings-top,
-  .entity-card-grid-holdings {
-    width: 100%;
-    max-width: 100%;
-    grid-template-columns: minmax(0, 1fr) !important;
-    --fixed-card-width: 100%;
-  }
 }
 
 @media (max-width: 560px) {

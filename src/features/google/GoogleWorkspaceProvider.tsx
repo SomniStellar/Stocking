@@ -335,7 +335,7 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
   }
 
   async function updateHolding(ticker: string, draft: HoldingDraft) {
-    if (!session?.accessToken || !spreadsheet?.id || !spreadsheet.sheetIds.Holdings) {
+    if (!session?.accessToken || !spreadsheet?.id || spreadsheet.sheetIds.Holdings == null) {
       setErrorMessage('Connect a spreadsheet before editing holdings.')
       return false
     }
@@ -378,7 +378,7 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
   }
 
   async function deleteHolding(ticker: string) {
-    if (!session?.accessToken || !spreadsheet?.id || !spreadsheet.sheetIds.Holdings) {
+    if (!session?.accessToken || !spreadsheet?.id || spreadsheet.sheetIds.Holdings == null) {
       setErrorMessage('Connect a spreadsheet before deleting holdings.')
       return false
     }
@@ -550,7 +550,7 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
   }
 
   async function updateWatchlist(rowNumber: number, draft: WatchlistDraft) {
-    if (!session?.accessToken || !spreadsheet?.id || !spreadsheet.sheetIds.Watchlists) {
+    if (!session?.accessToken || !spreadsheet?.id || spreadsheet.sheetIds.Watchlists == null) {
       setErrorMessage('Connect a spreadsheet before editing watchlists.')
       return false
     }
@@ -584,7 +584,7 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
   }
 
   async function deleteWatchlist(rowNumber: number) {
-    if (!session?.accessToken || !spreadsheet?.id || !spreadsheet.sheetIds.Watchlists) {
+    if (!session?.accessToken || !spreadsheet?.id || spreadsheet.sheetIds.Watchlists == null) {
       setErrorMessage('Connect a spreadsheet before deleting watchlists.')
       return false
     }

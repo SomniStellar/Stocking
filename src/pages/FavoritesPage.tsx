@@ -1,1 +1,0 @@
-export { WatchlistsPage as FavoritesPage } from './WatchlistsPage'

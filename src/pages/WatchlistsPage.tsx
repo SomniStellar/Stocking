@@ -4,7 +4,6 @@ import { buildWatchlistRows } from '../data/sheetData'
 import { useGoogleWorkspace } from '../features/google/GoogleWorkspaceContext'
 import { getGroupLabel, getPrimaryTag, getTagOptions, matchesTagFilter, parseTags } from '../lib/tags'
 import type { WatchlistDraft, WatchlistRow } from '../types/domain'
-import '../styles/watchlists.css'
 
 const INITIAL_DRAFT: WatchlistDraft = {
   ticker: '',

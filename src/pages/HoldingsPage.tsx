@@ -584,12 +584,12 @@ export function HoldingsPage() {
             </div>
           ) : null}
 
-          <div className="entity-card-grid entity-card-grid-holdings-top centered-fixed-card-grid fixed-card-grid-420">
+          <div className="entity-card-grid entity-card-grid-holdings-top centered-fixed-card-grid fixed-grid-420-2-1">
             {renderSummaryCard()}
             {showHoldingForm ? renderEditorCard('create') : renderAddSlotCard()}
           </div>
 
-          <div className={`entity-card-grid entity-card-grid-holdings centered-fixed-card-grid fixed-card-grid-420${draggingTicker ? ' entity-card-grid-drag-active' : ''}`}>
+          <div className={`entity-card-grid entity-card-grid-holdings centered-fixed-card-grid fixed-grid-420-3-2-1${draggingTicker ? ' entity-card-grid-drag-active' : ''}`}>
             {filteredHoldings.map((item) => (
               editingTicker === item.ticker ? renderEditorCard('edit', item.ticker) : renderHoldingCard(item)
             ))}

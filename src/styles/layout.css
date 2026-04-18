@@ -24,16 +24,8 @@
   margin-bottom: 0;
 }
 
-.brand-block .eyebrow {
-  margin: 0;
-}
-
 .brand-block h1 {
   font-size: 1.42rem;
-}
-
-.brand-copy {
-  display: none;
 }
 
 .nav-menu {
@@ -121,14 +113,8 @@
   align-self: center;
 }
 
-.chip-copy strong,
-.chip-detail {
+.chip-copy strong {
   display: block;
-}
-
-.chip-detail {
-  color: rgba(245, 239, 226, 0.72);
-  overflow-wrap: anywhere;
 }
 
 .profile-chip,
@@ -194,11 +180,5 @@
   .chip-copy strong {
     font-size: 0.94rem;
     line-height: 1.25;
-  }
-}
-
-@media (max-width: 560px) {
-  .chip-detail {
-    display: none;
   }
 }

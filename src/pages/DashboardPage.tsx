@@ -316,7 +316,7 @@ export function DashboardPage() {
 
   return (
     <div className="page-stack">
-      <section className="summary-grid summary-grid-dashboard centered-fixed-card-grid fixed-card-grid-280">
+      <section className="summary-grid summary-grid-dashboard centered-fixed-card-grid fixed-grid-280-4-2-1">
         <SummaryCard title="Portfolio Value" value={`$${totalValue.toFixed(2)}`} tone="neutral" />
         <SummaryCard title="Invested Cost" value={`$${totalInvested.toFixed(2)}`} tone="neutral" />
         <SummaryCard title="Unrealized P/L" value={`${totalProfit >= 0 ? '+' : '-'}$${Math.abs(totalProfit).toFixed(2)}`} tone={totalProfit >= 0 ? 'positive' : 'negative'} />
@@ -354,7 +354,7 @@ export function DashboardPage() {
           <div className="message-box message-box-neutral benchmark-inline-note">[Dev/Test] Spreadsheet not connected. Dashboard preview uses sample benchmark data.</div>
         ) : null}
 
-        <div className="summary-grid benchmark-summary-grid centered-fixed-card-grid fixed-card-grid-280">
+        <div className="summary-grid benchmark-summary-grid centered-fixed-card-grid fixed-grid-280-4-3-2-1">
           <article className="summary-card benchmark-card summary-card-accent benchmark-portfolio-card">
             <div className="benchmark-card-grid benchmark-card-grid-portfolio">
               <p className="benchmark-card-title">Portfolio</p>
