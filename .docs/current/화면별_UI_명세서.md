@@ -20,8 +20,10 @@ Rules:
 - Desktop top summary uses a single row of 4 cards when width is sufficient.
 - Mid-width top summary wraps to exactly `2 x 2`.
 - Top summary cards use a fixed width of `280px`.
+- Top summary uses shared fixed-grid tokens from the common card layer.
 - Desktop benchmark comparison uses fixed-width cards of `280px`.
 - Benchmark comparison wraps by width as `4 -> 3 -> 2 -> 1` columns.
+- Benchmark comparison uses shared fixed-grid tokens from the common card layer.
 - Narrow widths must reduce the column count before horizontal scrolling appears.
 - Comparison cards use a 3x2 grid.
 - Row 1 column 1 holds the title.
@@ -53,6 +55,7 @@ Current layout:
 
 Rules:
 - All cards use the same fixed size.
+- Holdings uses shared fixed-grid tokens from the common card layer.
 - All holdings cards use 2 rows by 3 columns.
 - Holdings is split into two sectors and both sectors use the same width.
 - The number of cards shown on one row depends on the fixed card width.
@@ -88,6 +91,23 @@ Purpose:
 
 Rules:
 - Benchmark management does not live in Settings.
+- Settings keeps a simple 2-column section grid that collapses to 1 column on narrow widths.
+
+## Watchlists
+Purpose:
+- Keep favorites and idea rows on one page and edit them from a compact form.
+
+Current layout:
+- Section header actions: `Add watchlist`, optional `Close input`, tag filter
+- Inline form with compact 2-column field grid
+- Grouped card list by primary tag
+- Each card uses common entity card header and compact metric grid patterns
+
+Rules:
+- Watchlists does not keep a page-specific CSS file.
+- Form grid and compact metric/card header patterns come from shared control/card layers.
+- Card structure is still provisional and may later align more closely with Holdings.
+- Empty state remains a simple guidance message until the page layout is expanded further.
 
 ## Login
 Purpose:
