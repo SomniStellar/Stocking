@@ -17,6 +17,7 @@ import {
 } from '../features/benchmarks/benchmarkDrafts'
 import { useGoogleWorkspace } from '../features/google/GoogleWorkspaceContext'
 import { AddIcon, CloseIcon, DeleteIcon, EditIcon } from '../features/holdings/holdingIcons'
+import '../styles/dashboard.css'
 import type { BenchmarkComparisonCard, ComparisonPeriod } from '../types/domain'
 
 const COMPARISON_PERIODS: ComparisonPeriod[] = ['YTD', '1Y', '3Y', '5Y']
@@ -315,7 +316,7 @@ export function DashboardPage() {
 
   return (
     <div className="page-stack">
-      <section className="summary-grid summary-grid-dashboard">
+      <section className="summary-grid summary-grid-dashboard centered-fixed-card-grid fixed-card-grid-280">
         <SummaryCard title="Portfolio Value" value={`$${totalValue.toFixed(2)}`} tone="neutral" />
         <SummaryCard title="Invested Cost" value={`$${totalInvested.toFixed(2)}`} tone="neutral" />
         <SummaryCard title="Unrealized P/L" value={`${totalProfit >= 0 ? '+' : '-'}$${Math.abs(totalProfit).toFixed(2)}`} tone={totalProfit >= 0 ? 'positive' : 'negative'} />
@@ -353,7 +354,7 @@ export function DashboardPage() {
           <div className="message-box message-box-neutral benchmark-inline-note">[Dev/Test] Spreadsheet not connected. Dashboard preview uses sample benchmark data.</div>
         ) : null}
 
-        <div className="summary-grid benchmark-summary-grid">
+        <div className="summary-grid benchmark-summary-grid centered-fixed-card-grid fixed-card-grid-280">
           <article className="summary-card benchmark-card summary-card-accent benchmark-portfolio-card">
             <div className="benchmark-card-grid benchmark-card-grid-portfolio">
               <p className="benchmark-card-title">Portfolio</p>

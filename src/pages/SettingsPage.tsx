@@ -2,6 +2,7 @@
 import { Link } from 'react-router-dom'
 import { SectionCard } from '../components/SectionCard'
 import { useGoogleWorkspace } from '../features/google/GoogleWorkspaceContext'
+import '../styles/settings.css'
 
 export function SettingsPage() {
   const {

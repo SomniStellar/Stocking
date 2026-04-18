@@ -82,6 +82,12 @@
   align-items: center;
 }
 
+.benchmark-card-actions-inline {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
 .benchmark-add-card,
 .benchmark-add-card-open {
   display: grid;
@@ -163,17 +169,13 @@
 
 .summary-grid-dashboard {
   width: min(100%, 1168px);
-  margin-inline: auto;
   grid-template-columns: repeat(4, 280px);
-  justify-content: center;
 }
 
 .benchmark-summary-grid {
   margin-top: 12px;
   width: min(100%, 1168px);
-  margin-inline: auto;
   grid-template-columns: repeat(4, 280px);
-  justify-content: center;
   align-items: stretch;
 }
 

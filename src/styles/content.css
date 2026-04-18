@@ -1,0 +1,158 @@
+.auth-panel h2,
+.brand-block h1,
+.topbar h2,
+.section-card h3,
+.page-error-card h1,
+.entity-card h4,
+.form-heading strong {
+  margin: 0;
+}
+
+.brand-copy,
+.section-card-head p,
+.summary-card span,
+.eyebrow,
+.muted-copy,
+.detail-list span,
+.entity-card p,
+.form-heading span,
+.metric-card span,
+.metric-card small {
+  color: rgba(245, 239, 226, 0.72);
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.72rem;
+}
+
+.page-stack {
+  display: grid;
+  gap: 22px;
+}
+
+.button-row,
+.status-panel,
+.section-toolbar,
+.card-actions,
+.tag-chip-row,
+.side-toggle-group,
+.field-label-inline,
+.entity-card-topline,
+.card-icon-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.section-toolbar,
+.field-label-inline,
+.entity-card-topline {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.stack-block,
+.group-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.badge,
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+
+.badge-success,
+.tag-chip {
+  background: rgba(83, 199, 142, 0.16);
+  color: #78e0a5;
+}
+
+.badge-muted {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(245, 239, 226, 0.76);
+}
+
+.tag-chip-total {
+  background: rgba(89, 168, 255, 0.18);
+  color: #8dc6ff;
+}
+
+.tag-chip-row,
+.card-actions,
+.side-toggle-group,
+.card-icon-actions {
+  flex-wrap: wrap;
+}
+
+.tag-chip-row {
+  min-width: 0;
+}
+
+.field-label-inline-clickable {
+  cursor: pointer;
+}
+
+.message-box {
+  padding: 12px 14px;
+  border-radius: 18px;
+}
+
+.message-box-neutral {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(245, 239, 226, 0.88);
+}
+
+.message-box-error {
+  background: rgba(180, 53, 52, 0.18);
+  color: #ffb2ab;
+}
+
+.check-list {
+  margin: 0;
+  padding-left: 18px;
+  color: rgba(245, 239, 226, 0.84);
+}
+
+.check-list li + li {
+  margin-top: 10px;
+}
+
+.text-positive {
+  color: #78e0a5;
+}
+
+.text-negative {
+  color: #ff8a80;
+}
+
+.empty-note {
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(245, 239, 226, 0.72);
+}
+
+@media (max-width: 720px) {
+  .button-row,
+  .status-panel,
+  .section-toolbar,
+  .side-toggle-group,
+  .field-label-inline,
+  .entity-card-topline {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tag-chip-row {
+    align-items: center;
+    flex-direction: row;
+  }
+}

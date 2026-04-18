@@ -1,0 +1,129 @@
+.primary-button,
+.secondary-button,
+.toggle-button,
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 999px;
+}
+
+.secondary-button,
+.toggle-button,
+.icon-button {
+  color: #fff6e5;
+  background: rgba(255, 184, 111, 0.14);
+}
+
+.primary-button {
+  color: #10151c;
+  background: linear-gradient(135deg, #ffd28a, #f6a55b);
+}
+
+.toggle-button,
+.icon-button {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.24);
+}
+
+.toggle-button-buy {
+  color: #0f1712;
+  background: rgba(120, 224, 165, 0.92);
+}
+
+.toggle-button-sell {
+  color: #fff4f2;
+  background: rgba(255, 138, 128, 0.88);
+}
+
+.toggle-button-side {
+  width: 100%;
+  min-height: 44px;
+}
+
+.icon-button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(255, 246, 229, 0.84);
+  box-shadow: none;
+}
+
+.icon-button:hover {
+  background: rgba(255, 184, 111, 0.12);
+  border-color: rgba(255, 184, 111, 0.22);
+}
+
+.icon-button svg {
+  width: 15px;
+  height: 15px;
+}
+
+.button-link {
+  text-decoration: none;
+}
+
+.field-block {
+  display: grid;
+  gap: 8px;
+}
+
+.field-inline {
+  display: inline-grid;
+  gap: 8px;
+  min-width: 170px;
+}
+
+.field-inline-compact {
+  min-width: 160px;
+}
+
+.trade-form-panel {
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.text-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff6e5;
+}
+
+select.text-input {
+  color-scheme: dark;
+}
+
+.text-input option {
+  background: #141b24;
+  color: #fff6e5;
+}
+
+.period-toggle-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.period-toggle {
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(245, 239, 226, 0.8);
+}
+
+.period-toggle-active {
+  border-color: rgba(255, 184, 111, 0.45);
+  background: rgba(255, 184, 111, 0.14);
+  color: #fff6e5;
+}

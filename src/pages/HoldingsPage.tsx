@@ -17,6 +17,7 @@ import {
   normalizeTags,
 } from '../features/holdings/holdingUtils'
 import { getTagOptions, matchesTagFilter, parseTags } from '../lib/tags'
+import '../styles/holdings.css'
 import type { HoldingDraft, HoldingRow } from '../types/domain'
 
 const INITIAL_DRAFT: HoldingDraft = {
@@ -583,12 +584,12 @@ export function HoldingsPage() {
             </div>
           ) : null}
 
-          <div className="entity-card-grid entity-card-grid-holdings-top">
+          <div className="entity-card-grid entity-card-grid-holdings-top centered-fixed-card-grid fixed-card-grid-420">
             {renderSummaryCard()}
             {showHoldingForm ? renderEditorCard('create') : renderAddSlotCard()}
           </div>
 
-          <div className={`entity-card-grid entity-card-grid-holdings${draggingTicker ? ' entity-card-grid-drag-active' : ''}`}>
+          <div className={`entity-card-grid entity-card-grid-holdings centered-fixed-card-grid fixed-card-grid-420${draggingTicker ? ' entity-card-grid-drag-active' : ''}`}>
             {filteredHoldings.map((item) => (
               editingTicker === item.ticker ? renderEditorCard('edit', item.ticker) : renderHoldingCard(item)
             ))}

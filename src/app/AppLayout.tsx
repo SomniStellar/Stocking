@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useGoogleWorkspace } from '../features/google/GoogleWorkspaceContext'
+import '../styles/layout.css'
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard' },

@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom'
 import { useGoogleWorkspace } from '../features/google/GoogleWorkspaceContext'
+import '../styles/auth.css'
 
 export function LoginPage() {
   const { busyState, clientReady, envConfigured, errorMessage, login, session } =

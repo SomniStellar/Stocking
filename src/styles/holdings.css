@@ -9,24 +9,13 @@
 }
 
 .entity-card-grid-holdings-top {
-  margin: 0 auto;
-  justify-content: center;
   grid-template-columns: repeat(2, 420px) !important;
   gap: 14px;
 }
 
 .entity-card-grid-holdings {
-  margin: 0 auto;
-  justify-content: center;
   grid-template-columns: repeat(3, 420px) !important;
   gap: 14px;
-}
-
-.entity-card-grid-holdings-top > .entity-card,
-.entity-card-grid-holdings > .entity-card {
-  width: 420px;
-  min-width: 420px;
-  max-width: 420px;
 }
 
 .holding-input-grid,
@@ -246,13 +235,7 @@
     width: 100%;
     max-width: 100%;
     grid-template-columns: minmax(0, 1fr) !important;
-  }
-
-  .entity-card-grid-holdings-top > .entity-card,
-  .entity-card-grid-holdings > .entity-card {
-    width: 100%;
-    min-width: 0;
-    max-width: 100%;
+    --fixed-card-width: 100%;
   }
 }
 
