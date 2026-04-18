@@ -6,6 +6,7 @@ Purpose:
 Current layout:
 - Top summary cards: Portfolio Value, Invested Cost, Unrealized P/L, Return
 - Portfolio Value and Invested Cost cards do not show helper captions
+- Top summary cards use fixed-width cards and wrap only between `1x4` and `2x2`
 - Benchmark comparison section
 - Period toggle: `YTD`, `1Y`, `3Y`, `5Y`
 - First comparison card: `Portfolio`
@@ -16,7 +17,12 @@ Current layout:
 
 Rules:
 - Keep only `[Dev/Test]` copy that is needed for test or preview verification.
-- Desktop benchmark card grid targets 5 cards per row on full width.
+- Desktop top summary uses a single row of 4 cards when width is sufficient.
+- Mid-width top summary wraps to exactly `2 x 2`.
+- Top summary cards use a fixed width of `280px`.
+- Desktop benchmark comparison uses fixed-width cards of `280px`.
+- Benchmark comparison wraps by width as `4 -> 3 -> 2 -> 1` columns.
+- Narrow widths must reduce the column count before horizontal scrolling appears.
 - Comparison cards use a 3x2 grid.
 - Row 1 column 1 holds the title.
 - Row 1 column 2 remains empty unless title sizing requires visual merge.
@@ -27,11 +33,13 @@ Rules:
 - Benchmark cards use this structure.
   - Row 1: benchmark name | empty
   - Row 2: empty | benchmark return
-  - Row 3: low-priority delta label | portfolio minus benchmark return in `%p`
+  - Row 3: low-priority delta label `vs Port.` | portfolio minus benchmark return in `%p`
 - The delta value is color-emphasized by sign.
 - Clicking the benchmark card toggles active or inactive state.
 - Inactive state keeps the card visible but removes strong color and reduces opacity.
 - `Add Benchmark` opens from the section title area next to `Benchmark Comparison`.
+- The open quick add UI stays inline in the title row as `Ticker input + Save + Cancel`.
+- The ticker input uses compact width sized for real ticker symbols, not a full form width.
 - The future graph area belongs directly below the benchmark card section.
 
 ## Holdings

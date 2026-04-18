@@ -247,7 +247,7 @@ export function DashboardPage() {
           <strong className="benchmark-card-return-value">
             {card.value >= 0 ? '+' : ''}{card.value.toFixed(2)}%
           </strong>
-          <span className="benchmark-card-delta-label">To Portfolio</span>
+          <span className="benchmark-card-delta-label">vs Port.</span>
           <strong className={['benchmark-card-delta-value', deltaClass].join(' ')}>
             {card.deltaFromPortfolio >= 0 ? '+' : ''}{card.deltaFromPortfolio.toFixed(2)}%p
           </strong>
@@ -273,14 +273,14 @@ export function DashboardPage() {
         disabled={!spreadsheet || busyState !== 'idle' || customBenchmarkCount >= 3}
       />
       <button
-        className="primary-button benchmark-inline-add-button"
+        className="secondary-button benchmark-inline-add-button"
         type="button"
         onClick={() => { void handleQuickAddBenchmark() }}
         disabled={!spreadsheet || busyState !== 'idle' || customBenchmarkCount >= 3}
         aria-label="Add benchmark ticker"
         title="Add benchmark ticker"
       >
-        <AddIcon />
+        Save
       </button>
       <button
         className="icon-button benchmark-inline-add-cancel"

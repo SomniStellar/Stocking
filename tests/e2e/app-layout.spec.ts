@@ -77,6 +77,14 @@ test.describe('Stocking app smoke', () => {
     await page.screenshot({ path: 'test-results/dashboard-preview-desktop.png', fullPage: true })
   })
 
+  test('dashboard preview add input open desktop capture', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 960 })
+    await openDashboardPreview(page)
+    await page.getByRole('button', { name: 'Add benchmark' }).click()
+    await expect(page.getByPlaceholder('Ticker')).toBeVisible()
+    await page.screenshot({ path: 'test-results/dashboard-preview-add-open-desktop.png', fullPage: true })
+  })
+
   test('holdings preview fhd capture', async ({ page }) => {
     await page.setViewportSize({ width: 1920, height: 1080 })
     await openHoldingsPreview(page)

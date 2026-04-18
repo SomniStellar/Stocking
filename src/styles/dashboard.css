@@ -1,5 +1,39 @@
-﻿.benchmark-inline-note {
+.benchmark-inline-note {
   margin-bottom: 12px;
+}
+
+.benchmark-inline-add {
+  display: inline-grid;
+  grid-template-columns: 128px auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.benchmark-inline-add-input {
+  min-width: 0;
+  min-height: 36px;
+  padding: 8px 12px;
+  border-radius: 14px;
+}
+
+.benchmark-inline-add-button,
+.benchmark-inline-add-cancel,
+.benchmark-header-add-trigger {
+  flex: 0 0 auto;
+}
+
+.benchmark-inline-add-button {
+  min-width: 68px;
+  min-height: 36px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+}
+
+.benchmark-inline-add-cancel,
+.benchmark-header-add-trigger {
+  width: 36px;
+  height: 36px;
 }
 
 .benchmark-form-grid {
@@ -32,6 +66,10 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+.summary-card-plain-value strong {
+  font-variant-numeric: tabular-nums;
 }
 
 .benchmark-portfolio-card {
@@ -124,13 +162,35 @@
 }
 
 .summary-grid-dashboard {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: min(100%, 1168px);
+  margin-inline: auto;
+  grid-template-columns: repeat(4, 280px);
+  justify-content: center;
 }
 
 .benchmark-summary-grid {
   margin-top: 12px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: min(100%, 1168px);
+  margin-inline: auto;
+  grid-template-columns: repeat(4, 280px);
+  justify-content: center;
   align-items: stretch;
+}
+
+.benchmark-card-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px 14px;
+  align-items: start;
+}
+
+.benchmark-card-grid-portfolio,
+.benchmark-card-grid-benchmark {
+  min-height: 122px;
+}
+
+.benchmark-card-grid-empty {
+  min-height: 1px;
 }
 
 .benchmark-card {
@@ -143,6 +203,18 @@
 
 .benchmark-card:hover {
   transform: translateY(-1px);
+}
+
+.benchmark-card-tone-positive {
+  background: linear-gradient(180deg, rgba(24, 84, 60, 0.52), rgba(13, 17, 24, 0.72));
+}
+
+.benchmark-card-tone-negative {
+  background: linear-gradient(180deg, rgba(120, 41, 36, 0.52), rgba(13, 17, 24, 0.72));
+}
+
+.benchmark-card-tone-neutral {
+  background: rgba(13, 17, 24, 0.72);
 }
 
 .benchmark-card:focus-visible {
@@ -182,6 +254,15 @@
   line-height: 1.1;
 }
 
+.benchmark-card-return-value,
+.benchmark-card-delta-value,
+.benchmark-card-amount-value {
+  justify-self: end;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .benchmark-card-label {
   color: rgba(245, 239, 226, 0.72);
   font-size: 0.82rem;
@@ -190,8 +271,11 @@
 
 .benchmark-card-delta-label {
   color: rgba(245, 239, 226, 0.5);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .benchmark-card-caption {
@@ -234,7 +318,45 @@
   font-size: 1.02rem;
 }
 
+@media (max-width: 1224px) {
+  .summary-grid-dashboard {
+    width: min(100%, 576px);
+    grid-template-columns: repeat(2, 280px);
+  }
+}
+
+@media (max-width: 1264px) {
+  .benchmark-summary-grid {
+    width: min(100%, 872px);
+    grid-template-columns: repeat(3, 280px);
+  }
+}
+
+@media (max-width: 968px) {
+  .benchmark-summary-grid {
+    width: min(100%, 576px);
+    grid-template-columns: repeat(2, 280px);
+  }
+}
+
+@media (max-width: 672px) {
+  .summary-grid-dashboard {
+    width: min(100%, 280px);
+    grid-template-columns: minmax(0, 280px);
+  }
+
+  .benchmark-summary-grid {
+    width: min(100%, 280px);
+    grid-template-columns: minmax(0, 280px);
+  }
+}
+
 @media (max-width: 720px) {
+  .benchmark-inline-add {
+    grid-template-columns: 112px auto auto;
+    width: auto;
+  }
+
   .benchmark-form-grid,
   .benchmark-add-card-form {
     grid-template-columns: 1fr;
@@ -246,5 +368,9 @@
 
   .benchmark-add-card-buttons > * {
     flex: 1;
+  }
+
+  .benchmark-card-grid {
+    gap: 8px 12px;
   }
 }

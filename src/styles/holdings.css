@@ -37,6 +37,10 @@
   margin-bottom: 6px;
 }
 
+.tag-chip-row-tight {
+  gap: 8px;
+}
+
 .holdings-summary-grid {
   grid-template-columns: minmax(0, 0.98fr) minmax(0, 1.12fr) minmax(0, 1.16fr) !important;
   gap: 14px;
