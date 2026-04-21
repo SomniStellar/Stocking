@@ -8,11 +8,12 @@ Current layout:
 - Portfolio Value and Invested Cost cards do not show helper captions
 - Top summary cards use fixed-width cards and wrap only between `1x4` and `2x2`
 - Benchmark comparison section
-- Period toggle: `YTD`, `1Y`, `3Y`, `5Y`
+- Period toggle: `YTD`, `3Y`, `5Y`
 - First comparison card: `Portfolio`
 - Comparison benchmark cards
+- Benchmark comparison chart area below the benchmark cards
 - `Add Benchmark` action in the section title area
-- Inline custom benchmark edit panel
+- Inline custom benchmark delete action
 - Validation and fallback status caption when needed
 
 Rules:
@@ -42,7 +43,15 @@ Rules:
 - `Add Benchmark` opens from the section title area next to `Benchmark Comparison`.
 - The open quick add UI stays inline in the title row as `Ticker input + Save + Cancel`.
 - The ticker input uses compact width sized for real ticker symbols, not a full form width.
-- The future graph area belongs directly below the benchmark card section.
+- Custom benchmark cards keep only a delete button in the top-right corner.
+- The benchmark comparison chart belongs directly below the benchmark card section.
+- The benchmark comparison chart uses the same width rule as the benchmark card grid, so both blocks align on the same centered fixed-width track.
+- The period toggle switches the whole benchmark comparison chart range.
+- The chart does not treat `YTD`, `3Y`, `5Y` as simultaneous X-axis points.
+- Hover values in the chart represent the selected range's current point value.
+- On initial live load, cards may appear before the chart finishes its background series sync.
+- A separate top-sector portfolio profit chart is not part of the current required layout.
+- A separate top-sector portfolio profit chart may be added later after series-based data is available.
 
 ## Holdings
 Purpose:
@@ -71,10 +80,12 @@ Rules:
 - `Add Holding` card is an input form and each occupied cell uses 2 rows: label and input/control.
   - Row 1 column 1: `Ticker`
   - Row 1 column 2: `Total Price` <-> `Avg Price` clickable toggle. Price input accepts up to 2 decimal places.
-  - Row 1 column 3: `Buy` <-> `Sell` segmented control, no extra label
+  - Row 1 column 3: `Add` <-> `Reduce` segmented control, no extra label
   - Row 2 column 1: `Quantity`. Quantity input accepts up to 4 decimal places.
   - Row 2 column 2: `Tags`, case-insensitive
   - Row 2 column 3: `Save` action, no extra label
+- The `Add` and `Reduce` labels are short on purpose so the control stays within the card width.
+- The holdings input card adjusts the current position state and does not represent full transaction history editing.
 - Holding card uses this structure.
   - Row 1 column 1: 2-row `Name`, `Ticker`
   - Row 1 column 2: 3-row `Price / Avg`, `Price`, `Avg`

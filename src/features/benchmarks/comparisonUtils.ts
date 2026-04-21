@@ -7,7 +7,7 @@
   SeriesPoint,
 } from '../../types/domain'
 
-const PERIOD_PRIORITY: ComparisonPeriod[] = ['YTD', '1Y', '3Y', '5Y']
+const PERIOD_PRIORITY: ComparisonPeriod[] = ['YTD', '3Y', '5Y']
 
 function toIsoDate(value: Date | string) {
   const point = typeof value === 'string' ? new Date(value) : value
@@ -20,9 +20,6 @@ function getPeriodStart(period: ComparisonPeriod, today = new Date()) {
   switch (period) {
     case 'YTD':
       return new Date(point.getFullYear(), 0, 1)
-    case '1Y':
-      point.setFullYear(point.getFullYear() - 1)
-      return point
     case '3Y':
       point.setFullYear(point.getFullYear() - 3)
       return point

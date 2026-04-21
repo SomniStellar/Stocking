@@ -5,6 +5,7 @@ interface SectionCardProps {
   description?: string
   titleActions?: ReactNode
   actions?: ReactNode
+  headClassName?: string
   children: ReactNode
 }
 
@@ -13,11 +14,12 @@ export function SectionCard({
   description,
   titleActions,
   actions,
+  headClassName,
   children,
 }: SectionCardProps) {
   return (
     <section className="section-card">
-      <div className="section-card-head">
+      <div className={['section-card-head', headClassName].filter(Boolean).join(' ')}>
         <div className="section-card-title-group">
           <div className="section-card-title-row">
             <h3>{title}</h3>

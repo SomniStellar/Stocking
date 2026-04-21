@@ -7,7 +7,7 @@
   price5Y: number
 }
 
-export type ComparisonPeriod = 'YTD' | '1Y' | '3Y' | '5Y'
+export type ComparisonPeriod = 'YTD' | '3Y' | '5Y'
 
 export type BenchmarkResolvedSource = 'primary' | 'fallback'
 
@@ -71,6 +71,35 @@ export interface BenchmarkComparisonCard {
   isEnabled: boolean
   isRenderable: boolean
   isDefault: boolean
+}
+
+export interface DashboardSummaryMetrics {
+  totalInvested: number
+  totalValue: number
+  totalProfit: number
+  totalYield: number
+}
+
+export interface DashboardComparisonChartPoint {
+  pointDate: string
+  label: string
+  portfolio: number
+  [benchmarkKey: string]: string | number
+}
+
+export interface DashboardComparisonChartLine {
+  benchmarkKey: string
+  name: string
+  color: string
+  isPortfolio: boolean
+}
+
+export interface DashboardRangeChartModel {
+  period: ComparisonPeriod
+  points: DashboardComparisonChartPoint[]
+  lines: DashboardComparisonChartLine[]
+  hasData: boolean
+  emptyMessage: string
 }
 
 export interface HoldingRow {

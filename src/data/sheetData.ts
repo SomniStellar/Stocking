@@ -37,14 +37,37 @@ export function buildHoldingRows(snapshot: SpreadsheetSnapshot): HoldingRow[] {
     .map(([ticker, rows]) => {
       const monitor = monitorMap.get(ticker)
       const firstRow = rows[0]
-      const quantity = rows.reduce((sum, row) => {
-        const sign = row.side === 'SELL' ? -1 : 1
-        return sum + sign * toNumber(row.quantity)
-      }, 0)
-      const invested = rows.reduce((sum, row) => {
-        const sign = row.side === 'SELL' ? -1 : 1
-        return sum + sign * toNumber(row.quantity) * toNumber(row.avg_price)
-      }, 0)
+      const costBasis = [...rows]
+        .sort((left, right) => left.row_number - right.row_number)
+        .reduce(
+          (state, row) => {
+            const quantity = toNumber(row.quantity)
+            const avgPrice = toNumber(row.avg_price)
+
+            if (quantity <= 0 || avgPrice <= 0) {
+              return state
+            }
+
+            if (row.side === 'SELL') {
+              const nextQuantity = Math.max(0, state.quantity - quantity)
+              const currentAverageCost = state.quantity > 0 ? state.cost / state.quantity : 0
+              const reducedCost = currentAverageCost * Math.min(quantity, state.quantity)
+
+              return {
+                quantity: nextQuantity,
+                cost: Math.max(0, state.cost - reducedCost),
+              }
+            }
+
+            return {
+              quantity: state.quantity + quantity,
+              cost: state.cost + quantity * avgPrice,
+            }
+          },
+          { quantity: 0, cost: 0 },
+        )
+      const quantity = costBasis.quantity
+      const invested = costBasis.cost
       const avgPrice = quantity === 0 ? 0 : invested / quantity
       const closeyest = toNumber(monitor?.closeyest)
       const ytdPrice = toNumber(monitor?.ytd_price)

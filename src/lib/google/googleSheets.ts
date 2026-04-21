@@ -3,12 +3,16 @@ import type {
   BenchmarksSheetRow,
   HoldingsSheetRow,
   MonitorSheetRow,
+  SeriesCalendarSheetRow,
+  SeriesSheetRow,
   SpreadsheetSnapshot,
   WatchlistsSheetRow,
 } from '../../types/sheets'
+import { buildBenchmarkRows } from '../../data/benchmarkData'
+import { buildHoldingRows } from '../../data/sheetData'
 
-const REQUIRED_TABS = ['Holdings', 'Watchlists', 'Monitor'] as const
-const OPTIONAL_TABS = ['Benchmarks'] as const
+const REQUIRED_TABS = ['Holdings', 'Watchlists', 'Monitor', 'Benchmarks'] as const
+const OPTIONAL_TABS = ['SeriesCalendar', 'Series'] as const
 const SUPPORTED_TABS = [...REQUIRED_TABS, ...OPTIONAL_TABS] as const
 
 const TEMPLATE_HEADERS: Record<(typeof SUPPORTED_TABS)[number], string[]> = {
@@ -16,6 +20,35 @@ const TEMPLATE_HEADERS: Record<(typeof SUPPORTED_TABS)[number], string[]> = {
   Watchlists: ['ticker', 'name', 'list_type', 'target_price', 'virtual_qty', 'virtual_entry_price', 'tags'],
   Monitor: ['ticker', 'full_ticker', 'closeyest', 'ytd_price', 'price_1y', 'price_3y', 'price_5y', 'tradetime'],
   Benchmarks: ['benchmark_key', 'ticker_primary', 'ticker_fallback', 'resolved_ticker', 'resolved_source', 'status', 'market', 'name', 'category', 'is_default', 'is_enabled', 'display_order', 'retry_count'],
+  SeriesCalendar: ['calendar_key', 'calendar_type', 'point_date', 'week_anchor', 'period_scope', 'updated_at'],
+  Series: ['series_key', 'series_type', 'ticker', 'name', 'sample_type', 'point_date', 'point_value', 'updated_at'],
+}
+
+function getColumnLetter(columnNumber: number) {
+  let remainder = columnNumber
+  let result = ''
+
+  while (remainder > 0) {
+    const current = (remainder - 1) % 26
+    result = String.fromCharCode(65 + current) + result
+    remainder = Math.floor((remainder - 1) / 26)
+  }
+
+  return result
+}
+
+function getSheetDataRange(tab: (typeof SUPPORTED_TABS)[number], startRow = 1) {
+  const endColumn = getColumnLetter(TEMPLATE_HEADERS[tab].length)
+  return `${tab}!A${startRow}:${endColumn}`
+}
+
+function getSheetHeaderRange(tab: (typeof SUPPORTED_TABS)[number]) {
+  const endColumn = getColumnLetter(TEMPLATE_HEADERS[tab].length)
+  return `${tab}!A1:${endColumn}1`
+}
+
+function getMissingOptionalTabs(sheets: string[]) {
+  return OPTIONAL_TABS.filter((tab) => !sheets.includes(tab))
 }
 
 function toNumber(value: unknown) {
@@ -101,6 +134,205 @@ function buildBenchmarkSheetValues(rows: BenchmarksSheetRow[]) {
   ])
 }
 
+function formatSheetDate(date: Date) {
+  return date.toISOString().slice(0, 10)
+}
+
+function getStartOfUtcDay(date: Date) {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
+}
+
+function getLastCompletedBusinessDate(now: Date) {
+  const point = getStartOfUtcDay(now)
+  point.setUTCDate(point.getUTCDate() - 1)
+
+  while (point.getUTCDay() === 0 || point.getUTCDay() === 6) {
+    point.setUTCDate(point.getUTCDate() - 1)
+  }
+
+  return point
+}
+
+function getLastCompletedFriday(now: Date) {
+  const point = getLastCompletedBusinessDate(now)
+
+  while (point.getUTCDay() !== 5) {
+    point.setUTCDate(point.getUTCDate() - 1)
+  }
+
+  return point
+}
+
+function buildSeriesCalendarRows() {
+  const rows: string[][] = []
+  const now = new Date()
+  const yearStart = new Date(Date.UTC(now.getUTCFullYear(), 0, 1))
+  const dailyEnd = getLastCompletedBusinessDate(now)
+  const weeklyEnd = getLastCompletedFriday(now)
+  const updatedAt = new Date().toISOString()
+
+  for (let point = new Date(yearStart); point <= dailyEnd; point.setUTCDate(point.getUTCDate() + 1)) {
+    const day = point.getUTCDay()
+    if (day === 0 || day === 6) {
+      continue
+    }
+
+    const pointDate = formatSheetDate(point)
+    rows.push([
+      `CAL_D_${pointDate.replaceAll('-', '_')}`,
+      'DAILY',
+      pointDate,
+      '',
+      'YTD',
+      updatedAt,
+    ])
+  }
+
+  const longStart = new Date(Date.UTC(
+    weeklyEnd.getUTCFullYear() - 5,
+    weeklyEnd.getUTCMonth(),
+    weeklyEnd.getUTCDate(),
+  ))
+  const weeklyPoint = new Date(longStart)
+
+  while (weeklyPoint.getUTCDay() !== 5) {
+    weeklyPoint.setUTCDate(weeklyPoint.getUTCDate() + 1)
+  }
+
+  for (let point = new Date(weeklyPoint); point <= weeklyEnd; point.setUTCDate(point.getUTCDate() + 7)) {
+    const pointDate = formatSheetDate(point)
+    rows.push([
+      `CAL_W_${pointDate.replaceAll('-', '_')}`,
+      'WEEKLY',
+      pointDate,
+      pointDate,
+      'LONG',
+      updatedAt,
+    ])
+  }
+
+  return rows
+}
+
+function buildHistoricalPriceFormula(ticker: string, pointDateCellRef: string) {
+  const normalizedTicker = ticker.trim().toUpperCase()
+  return `=IFERROR(INDEX(GOOGLEFINANCE("${normalizedTicker}","close",DATEVALUE(${pointDateCellRef})),2,2),"")`
+}
+
+function buildPortfolioSeriesFormula(holdings: ReturnType<typeof buildHoldingRows>, pointDateCellRef: string) {
+  if (holdings.length === 0) {
+    return ''
+  }
+
+  const parts = holdings.map((holding) => {
+    const normalizedTicker = holding.ticker.trim().toUpperCase()
+    return `${holding.quantity}*IFERROR(INDEX(GOOGLEFINANCE("${normalizedTicker}","close",DATEVALUE(${pointDateCellRef})),2,2),0)`
+  })
+
+  return `=${parts.join('+')}`
+}
+
+function getSeriesPointDateCellRef(rowIndex: number) {
+  return `F${rowIndex + 2}`
+}
+
+function buildPortfolioSeriesRow(
+  calendarRow: SeriesCalendarSheetRow,
+  holdings: ReturnType<typeof buildHoldingRows>,
+  rowIndex: number,
+  updatedAt: string,
+) {
+  return [
+    'PORTFOLIO',
+    'portfolio',
+    'PORTFOLIO',
+    'Portfolio',
+    calendarRow.calendar_type,
+    calendarRow.point_date,
+    buildPortfolioSeriesFormula(holdings, getSeriesPointDateCellRef(rowIndex)),
+    updatedAt,
+  ]
+}
+
+function buildBenchmarkSeriesRow(
+  calendarRow: SeriesCalendarSheetRow,
+  benchmark: ReturnType<typeof buildBenchmarkRows>[number],
+  rowIndex: number,
+  updatedAt: string,
+) {
+  const resolvedTicker = (benchmark.resolvedTicker || benchmark.tickerPrimary).trim().toUpperCase()
+
+  return [
+    benchmark.benchmarkKey,
+    'benchmark',
+    resolvedTicker,
+    benchmark.name || resolvedTicker,
+    calendarRow.calendar_type,
+    calendarRow.point_date,
+    buildHistoricalPriceFormula(resolvedTicker, getSeriesPointDateCellRef(rowIndex)),
+    updatedAt,
+  ]
+}
+
+function buildSeriesRows(snapshot: SpreadsheetSnapshot, calendarRows: SeriesCalendarSheetRow[]) {
+  const updatedAt = new Date().toISOString()
+  const holdings = buildHoldingRows(snapshot)
+  const benchmarkRows = buildBenchmarkRows(snapshot).filter((row) => row.isEnabled && row.status !== 'failed')
+  const rows: string[][] = []
+
+  calendarRows.forEach((calendarRow) => {
+    rows.push(buildPortfolioSeriesRow(calendarRow, holdings, rows.length, updatedAt))
+
+    benchmarkRows.forEach((benchmark) => {
+      rows.push(buildBenchmarkSeriesRow(calendarRow, benchmark, rows.length, updatedAt))
+    })
+  })
+
+  return rows
+}
+
+async function overwriteSheetRows(
+  spreadsheetId: string,
+  accessToken: string,
+  tab: (typeof SUPPORTED_TABS)[number],
+  rows: string[][],
+) {
+  const clearResponse = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(getSheetDataRange(tab, 2))}:clear`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    },
+  )
+
+  if (!clearResponse.ok) {
+    throw new Error(`Failed to clear existing ${tab} rows.`)
+  }
+
+  if (rows.length === 0) {
+    return
+  }
+
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(`${tab}!A2:${getColumnLetter(TEMPLATE_HEADERS[tab].length)}${rows.length + 1}`)}?valueInputOption=USER_ENTERED`,
+    {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ values: rows }),
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(`Failed to rewrite ${tab} rows.`)
+  }
+}
+
 export async function fetchGoogleUserProfile(accessToken: string) {
   const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -152,6 +384,44 @@ export async function fetchSpreadsheetConnection(spreadsheetId: string, accessTo
     isTemplateValid,
     checkedAt: new Date().toISOString(),
   } satisfies SpreadsheetConnection
+}
+
+export async function ensureOptionalTemplateTabs(spreadsheetId: string, accessToken: string, availableSheets?: string[]) {
+  const sheets = availableSheets && availableSheets.length > 0
+    ? availableSheets
+    : (await fetchSpreadsheetConnection(spreadsheetId, accessToken)).sheets
+  const missingTabs = getMissingOptionalTabs(sheets)
+
+  if (missingTabs.length === 0) {
+    return sheets
+  }
+
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        requests: missingTabs.map((title) => ({
+          addSheet: {
+            properties: { title },
+          },
+        })),
+      }),
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to add optional template tabs.')
+  }
+
+  const nextConnection = await fetchSpreadsheetConnection(spreadsheetId, accessToken)
+  await rewriteTemplateHeaders(spreadsheetId, accessToken, nextConnection.sheets)
+
+  return nextConnection.sheets
 }
 
 export async function fetchSpreadsheetSnapshot(spreadsheetId: string, accessToken: string, availableSheets?: string[]) {
@@ -232,8 +502,22 @@ export async function fetchSpreadsheetSnapshot(spreadsheetId: string, accessToke
       display_order: toNumber(record.display_order),
       retry_count: toNumber(record.retry_count),
     })),
-    seriesCalendar: [],
-    series: [],
+    seriesCalendar: mapRows<SeriesCalendarSheetRow>(valueMap.get('SeriesCalendar'), (record) => ({
+      calendar_key: record.calendar_key,
+      calendar_type: record.calendar_type === 'WEEKLY' ? 'WEEKLY' : 'DAILY',
+      point_date: record.point_date,
+      week_anchor: record.week_anchor,
+      period_scope: record.period_scope === 'LONG' ? 'LONG' : 'YTD',
+    })),
+    series: mapRows<SeriesSheetRow>(valueMap.get('Series'), (record) => ({
+      series_key: record.series_key,
+      series_type: record.series_type === 'benchmark' ? 'benchmark' : 'portfolio',
+      ticker: record.ticker,
+      name: record.name,
+      sample_type: record.sample_type === 'WEEKLY' ? 'WEEKLY' : 'DAILY',
+      point_date: record.point_date,
+      point_value: toNumber(record.point_value),
+    })),
   } satisfies SpreadsheetSnapshot
 }
 
@@ -281,7 +565,7 @@ export async function rewriteTemplateHeaders(spreadsheetId: string, accessToken:
   const targetTabs = SUPPORTED_TABS.filter((tab) => sheets.includes(tab)) as (typeof SUPPORTED_TABS)[number][]
 
   const data = targetTabs.map((tab) => ({
-    range: `${tab}!A1:${String.fromCharCode(64 + TEMPLATE_HEADERS[tab].length)}1`,
+    range: getSheetHeaderRange(tab),
     values: [TEMPLATE_HEADERS[tab]],
   }))
 
@@ -324,7 +608,7 @@ export async function overwriteHoldingRows(spreadsheetId: string, accessToken: s
   await rewriteTemplateHeaders(spreadsheetId, accessToken)
 
   const clearResponse = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent('Holdings!A2:G')}:clear`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(getSheetDataRange('Holdings', 2))}:clear`,
     {
       method: 'POST',
       headers: {
@@ -343,7 +627,7 @@ export async function overwriteHoldingRows(spreadsheetId: string, accessToken: s
   }
 
   const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(`Holdings!A2:G${rows.length + 1}`)}?valueInputOption=USER_ENTERED`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(`Holdings!A2:${getColumnLetter(TEMPLATE_HEADERS.Holdings.length)}${rows.length + 1}`)}?valueInputOption=USER_ENTERED`,
     {
       method: 'PUT',
       headers: {
@@ -396,7 +680,7 @@ export async function overwriteBenchmarkRows(
   await rewriteTemplateHeaders(spreadsheetId, accessToken, sheets)
 
   const clearResponse = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent('Benchmarks!A2:M')}:clear`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(getSheetDataRange('Benchmarks', 2))}:clear`,
     {
       method: 'POST',
       headers: {
@@ -415,7 +699,7 @@ export async function overwriteBenchmarkRows(
   }
 
   const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(`Benchmarks!A2:M${rows.length + 1}`)}?valueInputOption=USER_ENTERED`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(`Benchmarks!A2:${getColumnLetter(TEMPLATE_HEADERS.Benchmarks.length)}${rows.length + 1}`)}?valueInputOption=USER_ENTERED`,
     {
       method: 'PUT',
       headers: {
@@ -473,10 +757,12 @@ export async function resetSpreadsheetRows(spreadsheetId: string, accessToken: s
   await rewriteTemplateHeaders(spreadsheetId, accessToken, sheets)
 
   const ranges = [
-    'Holdings!A2:G',
-    'Watchlists!A2:G',
-    'Monitor!A2:H',
-    ...(sheets.includes('Benchmarks') ? ['Benchmarks!A2:M'] : []),
+    getSheetDataRange('Holdings', 2),
+    getSheetDataRange('Watchlists', 2),
+    getSheetDataRange('Monitor', 2),
+    ...(sheets.includes('Benchmarks') ? [getSheetDataRange('Benchmarks', 2)] : []),
+    ...(sheets.includes('SeriesCalendar') ? [getSheetDataRange('SeriesCalendar', 2)] : []),
+    ...(sheets.includes('Series') ? [getSheetDataRange('Series', 2)] : []),
   ]
 
   const response = await fetch(
@@ -499,7 +785,7 @@ export async function syncMonitorSheet(spreadsheetId: string, accessToken: strin
   const uniqueTickers = [...new Set(tickers.map((ticker) => ticker.trim().toUpperCase()).filter(Boolean))]
 
   const clearResponse = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent('Monitor!A2:H')}:clear`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(getSheetDataRange('Monitor', 2))}:clear`,
     {
       method: 'POST',
       headers: {
@@ -518,7 +804,7 @@ export async function syncMonitorSheet(spreadsheetId: string, accessToken: strin
   }
 
   const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(`Monitor!A2:H${uniqueTickers.length + 1}`)}?valueInputOption=USER_ENTERED`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(`Monitor!A2:${getColumnLetter(TEMPLATE_HEADERS.Monitor.length)}${uniqueTickers.length + 1}`)}?valueInputOption=USER_ENTERED`,
     {
       method: 'PUT',
       headers: {
@@ -532,6 +818,35 @@ export async function syncMonitorSheet(spreadsheetId: string, accessToken: strin
   if (!response.ok) {
     throw new Error('Failed to sync monitor rows.')
   }
+}
+
+export async function syncSeriesSheets(
+  spreadsheetId: string,
+  accessToken: string,
+  snapshot: SpreadsheetSnapshot,
+  availableSheets?: string[],
+) {
+  const sheets = availableSheets && availableSheets.length > 0
+    ? availableSheets
+    : (await fetchSpreadsheetConnection(spreadsheetId, accessToken)).sheets
+
+  if (!sheets.includes('SeriesCalendar') || !sheets.includes('Series')) {
+    return
+  }
+
+  const calendarValues = buildSeriesCalendarRows()
+  const calendarRows: SeriesCalendarSheetRow[] = calendarValues.map((row) => ({
+    calendar_key: row[0],
+    calendar_type: row[1] === 'WEEKLY' ? 'WEEKLY' : 'DAILY',
+    point_date: row[2],
+    week_anchor: row[3],
+    period_scope: row[4] === 'LONG' ? 'LONG' : 'YTD',
+  }))
+  const seriesValues = buildSeriesRows(snapshot, calendarRows)
+
+  await rewriteTemplateHeaders(spreadsheetId, accessToken, sheets)
+  await overwriteSheetRows(spreadsheetId, accessToken, 'SeriesCalendar', calendarValues)
+  await overwriteSheetRows(spreadsheetId, accessToken, 'Series', seriesValues)
 }
 
 export function getTemplateValidationMessage(connection: SpreadsheetConnection) {

@@ -1,26 +1,21 @@
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
+import { DashboardComparisonChart } from '../components/DashboardComparisonChart'
 import { SectionCard } from '../components/SectionCard'
 import { SummaryCard } from '../components/SummaryCard'
+import { createComparisonPeriodLabel } from '../data/benchmarkData'
+import { buildDashboardComparisonViewModel } from '../data/dashboardData'
 import {
-  buildBenchmarkComparisonCards,
-  buildBenchmarkRows,
-  calculatePortfolioPeriodReturn,
-  createComparisonPeriodLabel,
-  validateBenchmarkRows,
-} from '../data/benchmarkData'
-import { buildHoldingRows } from '../data/sheetData'
-import {
-  EMPTY_BENCHMARK_FORM,
   getNextBenchmarkDisplayOrder,
   toBenchmarkDrafts,
   validateCustomBenchmarkInput,
 } from '../features/benchmarks/benchmarkDrafts'
 import { useGoogleWorkspace } from '../features/google/GoogleWorkspaceContext'
-import { AddIcon, CloseIcon, DeleteIcon, EditIcon } from '../features/holdings/holdingIcons'
+import { AddIcon, CloseIcon, DeleteIcon } from '../features/holdings/holdingIcons'
 import '../styles/dashboard.css'
 import type { BenchmarkComparisonCard, ComparisonPeriod } from '../types/domain'
 
-const COMPARISON_PERIODS: ComparisonPeriod[] = ['YTD', '1Y', '3Y', '5Y']
+const COMPARISON_PERIODS: ComparisonPeriod[] = ['YTD', '3Y', '5Y']
+const FALLBACK_CARD_COLOR = 'rgba(255, 255, 255, 0.18)'
 
 export function DashboardPage() {
   const { busyState, saveBenchmarks, spreadsheet, snapshot } = useGoogleWorkspace()
@@ -28,32 +23,20 @@ export function DashboardPage() {
   const [showQuickAddInput, setShowQuickAddInput] = useState(false)
   const [quickAddTicker, setQuickAddTicker] = useState('')
   const [quickAddError, setQuickAddError] = useState<string | null>(null)
-  const [editingBenchmarkKey, setEditingBenchmarkKey] = useState<string | null>(null)
-  const [benchmarkForm, setBenchmarkForm] = useState(EMPTY_BENCHMARK_FORM)
-  const [benchmarkEditorError, setBenchmarkEditorError] = useState<string | null>(null)
 
-  const holdings = buildHoldingRows(snapshot)
-  const benchmarkRows = buildBenchmarkRows(snapshot)
-  const benchmarkValidation = validateBenchmarkRows(benchmarkRows)
-  const comparisonCards = buildBenchmarkComparisonCards(snapshot, holdings, comparisonPeriod)
+  const comparisonView = buildDashboardComparisonViewModel(snapshot, comparisonPeriod)
+  const benchmarkRows = comparisonView.benchmarkRows
+  const comparisonCards = comparisonView.comparisonCards
   const benchmarkDrafts = toBenchmarkDrafts(benchmarkRows)
-  const portfolioReturn = calculatePortfolioPeriodReturn(holdings, comparisonPeriod)
+  const portfolioReturn = comparisonView.portfolioReturn
+  const portfolioProfitAmount = comparisonView.portfolioProfitAmount
   const customBenchmarkCount = benchmarkRows.filter((row) => !row.isDefault).length
-
-  const totalInvested = holdings.reduce((sum, item) => sum + item.invested, 0)
-  const totalValue = holdings.reduce((sum, item) => sum + item.marketValue, 0)
-  const totalProfit = holdings.reduce((sum, item) => sum + item.unrealizedProfit, 0)
-  const totalYield = totalInvested === 0 ? 0 : (totalProfit / totalInvested) * 100
-
-  const benchmarkValidationCaption = benchmarkValidation.duplicateKey
-    ? `Duplicate benchmark key: ${benchmarkValidation.duplicateKey}`
-    : benchmarkValidation.duplicateTicker
-      ? `Duplicate ticker: ${benchmarkValidation.duplicateTicker}`
-      : benchmarkValidation.invalidMarketKey
-        ? `Only US custom benchmarks are allowed: ${benchmarkValidation.invalidMarketKey}`
-        : benchmarkValidation.customLimitExceeded
-          ? 'Up to 3 custom benchmarks are allowed.'
-          : null
+  const {
+    summary: { totalInvested, totalProfit, totalValue, totalYield },
+    benchmarkValidationCaption,
+    rangeChart,
+  } = comparisonView
+  const chartColorMap = new Map(rangeChart.lines.map((line) => [line.benchmarkKey, line.color]))
 
   async function persistBenchmarkDrafts(nextDrafts: ReturnType<typeof toBenchmarkDrafts>) {
     const orderedDrafts = [...nextDrafts].sort((left, right) => left.displayOrder - right.displayOrder)
@@ -63,9 +46,6 @@ export function DashboardPage() {
       setShowQuickAddInput(false)
       setQuickAddTicker('')
       setQuickAddError(null)
-      setBenchmarkEditorError(null)
-      setBenchmarkForm(EMPTY_BENCHMARK_FORM)
-      setEditingBenchmarkKey(null)
     }
   }
 
@@ -104,69 +84,6 @@ export function DashboardPage() {
     ])
   }
 
-  function handleStartBenchmarkEdit(benchmarkKey: string) {
-    const target = benchmarkRows.find((row) => row.benchmarkKey === benchmarkKey)
-    if (!target || target.isDefault) {
-      return
-    }
-
-    setBenchmarkEditorError(null)
-    setEditingBenchmarkKey(target.benchmarkKey)
-    setBenchmarkForm({
-      benchmarkKey: target.benchmarkKey,
-      name: target.name,
-      tickerPrimary: target.tickerPrimary,
-      tickerFallback: target.tickerFallback,
-    })
-  }
-
-  function handleCancelBenchmarkEdit() {
-    setBenchmarkEditorError(null)
-    setEditingBenchmarkKey(null)
-    setBenchmarkForm(EMPTY_BENCHMARK_FORM)
-  }
-
-  async function handleBenchmarkEditSubmit() {
-    if (!editingBenchmarkKey) {
-      return
-    }
-
-    const normalizedKey = benchmarkForm.benchmarkKey.trim().toUpperCase()
-    const normalizedTicker = benchmarkForm.tickerPrimary.trim().toUpperCase()
-    const normalizedFallback = benchmarkForm.tickerFallback.trim().toUpperCase()
-    const normalizedName = benchmarkForm.name.trim() || normalizedKey
-
-    if (!normalizedKey || !normalizedTicker) {
-      setBenchmarkEditorError('Benchmark key and ticker are required.')
-      return
-    }
-
-    const validation = validateCustomBenchmarkInput(benchmarkDrafts, normalizedKey, normalizedTicker, editingBenchmarkKey)
-    if (validation.duplicateKey) {
-      setBenchmarkEditorError('Duplicate benchmark keys are not allowed.')
-      return
-    }
-
-    if (validation.duplicateTicker) {
-      setBenchmarkEditorError('Duplicate tickers are not allowed.')
-      return
-    }
-
-    await persistBenchmarkDrafts(
-      benchmarkDrafts.map((row) => (
-        row.benchmarkKey === editingBenchmarkKey
-          ? {
-              ...row,
-              benchmarkKey: normalizedKey,
-              name: normalizedName,
-              tickerPrimary: normalizedTicker,
-              tickerFallback: normalizedFallback,
-            }
-          : row
-      )),
-    )
-  }
-
   async function handleBenchmarkToggle(benchmarkKey: string) {
     if (!spreadsheet || busyState !== 'idle') {
       return
@@ -193,6 +110,8 @@ export function DashboardPage() {
         ? 'benchmark-card-tone-positive'
         : 'benchmark-card-tone-negative'
     const deltaClass = card.deltaFromPortfolio >= 0 ? 'benchmark-card-delta-positive' : 'benchmark-card-delta-negative'
+    const returnClass = card.value >= 0 ? 'benchmark-card-return-positive' : 'benchmark-card-return-negative'
+    const accentColor = chartColorMap.get(card.benchmarkKey) ?? FALLBACK_CARD_COLOR
 
     return (
       <article
@@ -203,6 +122,7 @@ export function DashboardPage() {
           toneClass,
           isMuted ? 'benchmark-card-disabled' : 'benchmark-card-enabled',
         ].filter(Boolean).join(' ')}
+        style={{ '--benchmark-accent': accentColor } as CSSProperties}
         data-item-id={`benchmark-card-${card.benchmarkKey}`}
         onClick={() => { void handleBenchmarkToggle(card.benchmarkKey) }}
         onKeyDown={(event) => {
@@ -217,17 +137,11 @@ export function DashboardPage() {
         aria-label={`${card.name} ${card.isEnabled ? 'disable benchmark' : 'enable benchmark'}`}
       >
         {!card.isDefault ? (
-          <div className="benchmark-card-actions-inline" onClick={(event) => event.stopPropagation()}>
-            <button
-              className="icon-button"
-              type="button"
-              onClick={() => handleStartBenchmarkEdit(card.benchmarkKey)}
-              disabled={busyState !== 'idle'}
-              title="Edit benchmark"
-              aria-label={`Edit ${card.name}`}
-            >
-              <EditIcon />
-            </button>
+          <div
+            className="benchmark-card-actions-inline"
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => event.stopPropagation()}
+          >
             <button
               className="icon-button"
               type="button"
@@ -242,14 +156,14 @@ export function DashboardPage() {
         ) : null}
 
         <div className="benchmark-card-grid benchmark-card-grid-benchmark">
-          <p className="benchmark-card-title">{card.name}</p>
+          <p className="benchmark-card-title benchmark-card-title-main">{card.name}</p>
           <span className="benchmark-card-grid-empty" aria-hidden="true" />
           <span className="benchmark-card-grid-empty" aria-hidden="true" />
-          <strong className="benchmark-card-return-value">
+          <strong className={['benchmark-card-return-value', 'benchmark-card-return-main', returnClass].join(' ')}>
             {card.value >= 0 ? '+' : ''}{card.value.toFixed(2)}%
           </strong>
-          <span className="benchmark-card-delta-label">vs Port.</span>
-          <strong className={['benchmark-card-delta-value', deltaClass].join(' ')}>
+          <span className="benchmark-card-delta-label benchmark-card-delta-label-main">vs Port.</span>
+          <strong className={['benchmark-card-delta-value', 'benchmark-card-delta-main', deltaClass].join(' ')}>
             {card.deltaFromPortfolio >= 0 ? '+' : ''}{card.deltaFromPortfolio.toFixed(2)}%p
           </strong>
         </div>
@@ -327,6 +241,7 @@ export function DashboardPage() {
         title="Benchmark Comparison"
         titleActions={benchmarkTitleActions}
         description=""
+        headClassName="fixed-track-280-4-3-2-1"
         actions={(
           <div className="period-toggle-row">
             {COMPARISON_PERIODS.map((period) => (
@@ -355,17 +270,20 @@ export function DashboardPage() {
         ) : null}
 
         <div className="summary-grid benchmark-summary-grid centered-fixed-card-grid fixed-grid-280-4-3-2-1">
-          <article className="summary-card benchmark-card summary-card-accent benchmark-portfolio-card">
+          <article
+            className="summary-card benchmark-card summary-card-accent benchmark-portfolio-card"
+            style={{ '--benchmark-accent': chartColorMap.get('portfolio') ?? '#f6a55b' } as CSSProperties}
+          >
             <div className="benchmark-card-grid benchmark-card-grid-portfolio">
-              <p className="benchmark-card-title">Portfolio</p>
+              <p className="benchmark-card-title benchmark-card-title-main">Portfolio</p>
               <span className="benchmark-card-grid-empty" aria-hidden="true" />
               <span className="benchmark-card-grid-empty" aria-hidden="true" />
-              <strong className="benchmark-card-return-value">
+              <strong className={['benchmark-card-return-value', 'benchmark-card-return-main', portfolioReturn >= 0 ? 'benchmark-card-return-positive' : 'benchmark-card-return-negative'].join(' ')}>
                 {portfolioReturn >= 0 ? '+' : ''}{portfolioReturn.toFixed(2)}%
               </strong>
               <span className="benchmark-card-grid-empty" aria-hidden="true" />
-              <strong className={totalProfit >= 0 ? 'benchmark-card-amount-value benchmark-card-delta-positive' : 'benchmark-card-amount-value benchmark-card-delta-negative'}>
-                {totalProfit >= 0 ? '+' : '-'}${Math.abs(totalProfit).toFixed(2)}
+              <strong className={portfolioProfitAmount >= 0 ? 'benchmark-card-amount-value benchmark-card-amount-main benchmark-card-delta-positive' : 'benchmark-card-amount-value benchmark-card-amount-main benchmark-card-delta-negative'}>
+                {portfolioProfitAmount >= 0 ? '+' : '-'}${Math.abs(portfolioProfitAmount).toFixed(2)}
               </strong>
             </div>
           </article>
@@ -373,70 +291,7 @@ export function DashboardPage() {
           {comparisonCards.map((card) => renderBenchmarkCard(card))}
         </div>
 
-        {editingBenchmarkKey ? (
-          <div className="benchmark-editor-panel">
-            <div className="benchmark-editor-head">
-              <strong>Edit Custom Benchmark</strong>
-              <span>{editingBenchmarkKey}</span>
-            </div>
-
-            <div className="benchmark-form-grid">
-              <label className="field-block" htmlFor="benchmark-key">
-                <span>Benchmark key</span>
-                <input
-                  id="benchmark-key"
-                  className="text-input"
-                  value={benchmarkForm.benchmarkKey}
-                  onChange={(event) => setBenchmarkForm((current) => ({ ...current, benchmarkKey: event.target.value }))}
-                  placeholder="QQQM"
-                />
-              </label>
-              <label className="field-block" htmlFor="benchmark-name">
-                <span>Name</span>
-                <input
-                  id="benchmark-name"
-                  className="text-input"
-                  value={benchmarkForm.name}
-                  onChange={(event) => setBenchmarkForm((current) => ({ ...current, name: event.target.value }))}
-                  placeholder="QQQM"
-                />
-              </label>
-              <label className="field-block" htmlFor="benchmark-primary">
-                <span>Primary ticker</span>
-                <input
-                  id="benchmark-primary"
-                  className="text-input"
-                  value={benchmarkForm.tickerPrimary}
-                  onChange={(event) => setBenchmarkForm((current) => ({ ...current, tickerPrimary: event.target.value }))}
-                  placeholder="QQQM"
-                />
-              </label>
-              <label className="field-block" htmlFor="benchmark-fallback">
-                <span>Fallback ticker</span>
-                <input
-                  id="benchmark-fallback"
-                  className="text-input"
-                  value={benchmarkForm.tickerFallback}
-                  onChange={(event) => setBenchmarkForm((current) => ({ ...current, tickerFallback: event.target.value }))}
-                  placeholder="Optional"
-                />
-              </label>
-            </div>
-
-            {benchmarkEditorError ? (
-              <div className="message-box message-box-neutral benchmark-inline-note">{benchmarkEditorError}</div>
-            ) : null}
-
-            <div className="button-row">
-              <button className="primary-button" type="button" onClick={() => { void handleBenchmarkEditSubmit() }} disabled={!spreadsheet || busyState !== 'idle'}>
-                Save benchmark
-              </button>
-              <button className="secondary-button" type="button" onClick={handleCancelBenchmarkEdit} disabled={busyState !== 'idle'}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        ) : null}
+        <DashboardComparisonChart chart={rangeChart} />
       </SectionCard>
     </div>
   )

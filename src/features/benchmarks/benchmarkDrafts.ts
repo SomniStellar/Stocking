@@ -7,6 +7,64 @@ export const EMPTY_BENCHMARK_FORM = {
   tickerFallback: '',
 }
 
+export const DEFAULT_BENCHMARK_DRAFTS: BenchmarkDraft[] = [
+  {
+    benchmarkKey: 'NASDAQ100',
+    name: 'Nasdaq 100',
+    tickerPrimary: 'QQQ',
+    tickerFallback: '',
+    category: 'INDEX',
+    market: 'US',
+    isDefault: true,
+    isEnabled: true,
+    displayOrder: 1,
+  },
+  {
+    benchmarkKey: 'SP500',
+    name: 'S&P 500',
+    tickerPrimary: 'SPY',
+    tickerFallback: '',
+    category: 'INDEX',
+    market: 'US',
+    isDefault: true,
+    isEnabled: true,
+    displayOrder: 2,
+  },
+  {
+    benchmarkKey: 'DOW',
+    name: 'Dow Jones',
+    tickerPrimary: 'DIA',
+    tickerFallback: '',
+    category: 'INDEX',
+    market: 'US',
+    isDefault: true,
+    isEnabled: true,
+    displayOrder: 3,
+  },
+  {
+    benchmarkKey: 'KOSPI',
+    name: 'KOSPI',
+    tickerPrimary: 'KOSPI',
+    tickerFallback: '',
+    category: 'INDEX',
+    market: 'KR',
+    isDefault: true,
+    isEnabled: false,
+    displayOrder: 4,
+  },
+  {
+    benchmarkKey: 'KOSDAQ',
+    name: 'KOSDAQ',
+    tickerPrimary: 'KOSDAQ',
+    tickerFallback: '',
+    category: 'INDEX',
+    market: 'KR',
+    isDefault: true,
+    isEnabled: false,
+    displayOrder: 5,
+  },
+]
+
 export function toBenchmarkDrafts(rows: BenchmarkDefinition[]): BenchmarkDraft[] {
   return rows.map((row) => ({
     benchmarkKey: row.benchmarkKey,

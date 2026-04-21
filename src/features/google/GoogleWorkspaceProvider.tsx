@@ -6,6 +6,7 @@ import {
   appendWatchlistRow,
   createTemplateSpreadsheet,
   deleteSheetRows,
+  ensureOptionalTemplateTabs,
   fetchGoogleUserProfile,
   fetchSpreadsheetConnection,
   fetchSpreadsheetSnapshot,
@@ -15,7 +16,9 @@ import {
   resetSpreadsheetRows,
   rewriteTemplateHeaders,
   syncMonitorSheet,
+  syncSeriesSheets,
 } from '../../lib/google/googleSheets'
+import { DEFAULT_BENCHMARK_DRAFTS } from '../benchmarks/benchmarkDrafts'
 import type { GoogleSession } from '../../types/google'
 import type { SpreadsheetSnapshot } from '../../types/sheets'
 import {
@@ -56,19 +59,104 @@ const PREVIEW_HOLDINGS_SNAPSHOT: SpreadsheetSnapshot = {
     { benchmark_key: 'NASDAQ100', ticker_primary: 'QQQ', ticker_fallback: '', resolved_ticker: 'QQQ', resolved_source: 'primary', status: 'ready', market: 'US', name: 'Nasdaq 100', category: 'INDEX', is_default: true, is_enabled: true, display_order: 2, retry_count: 0 },
     { benchmark_key: 'DOW', ticker_primary: 'DIA', ticker_fallback: '', resolved_ticker: 'DIA', resolved_source: 'primary', status: 'ready', market: 'US', name: 'Dow Jones', category: 'INDEX', is_default: true, is_enabled: true, display_order: 3, retry_count: 0 },
   ],
-  seriesCalendar: [],
-  series: [],
+  seriesCalendar: [
+    { calendar_key: 'CAL_D_2026_01_02', calendar_type: 'DAILY', point_date: '2026-01-02', week_anchor: '', period_scope: 'YTD' },
+    { calendar_key: 'CAL_D_2026_02_03', calendar_type: 'DAILY', point_date: '2026-02-03', week_anchor: '', period_scope: 'YTD' },
+    { calendar_key: 'CAL_D_2026_03_03', calendar_type: 'DAILY', point_date: '2026-03-03', week_anchor: '', period_scope: 'YTD' },
+    { calendar_key: 'CAL_D_2026_04_10', calendar_type: 'DAILY', point_date: '2026-04-10', week_anchor: '', period_scope: 'YTD' },
+    { calendar_key: 'CAL_W_2021_04_09', calendar_type: 'WEEKLY', point_date: '2021-04-09', week_anchor: '2021-04-09', period_scope: 'LONG' },
+    { calendar_key: 'CAL_W_2022_04_08', calendar_type: 'WEEKLY', point_date: '2022-04-08', week_anchor: '2022-04-08', period_scope: 'LONG' },
+    { calendar_key: 'CAL_W_2023_04_07', calendar_type: 'WEEKLY', point_date: '2023-04-07', week_anchor: '2023-04-07', period_scope: 'LONG' },
+    { calendar_key: 'CAL_W_2024_04_12', calendar_type: 'WEEKLY', point_date: '2024-04-12', week_anchor: '2024-04-12', period_scope: 'LONG' },
+    { calendar_key: 'CAL_W_2025_04_11', calendar_type: 'WEEKLY', point_date: '2025-04-11', week_anchor: '2025-04-11', period_scope: 'LONG' },
+    { calendar_key: 'CAL_W_2026_04_10', calendar_type: 'WEEKLY', point_date: '2026-04-10', week_anchor: '2026-04-10', period_scope: 'LONG' },
+  ],
+  series: [
+    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'DAILY', point_date: '2026-01-02', point_value: 100 },
+    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'DAILY', point_date: '2026-02-03', point_value: 104.5 },
+    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'DAILY', point_date: '2026-03-03', point_value: 108.2 },
+    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'DAILY', point_date: '2026-04-10', point_value: 111.6 },
+    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'WEEKLY', point_date: '2021-04-09', point_value: 100 },
+    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'WEEKLY', point_date: '2022-04-08', point_value: 112 },
+    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'WEEKLY', point_date: '2023-04-07', point_value: 118 },
+    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'WEEKLY', point_date: '2024-04-12', point_value: 126 },
+    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'WEEKLY', point_date: '2025-04-11', point_value: 133 },
+    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'WEEKLY', point_date: '2026-04-10', point_value: 141 },
+    { series_key: 'SP500', series_type: 'benchmark', ticker: 'SPY', name: 'S&P 500', sample_type: 'DAILY', point_date: '2026-01-02', point_value: 100 },
+    { series_key: 'SP500', series_type: 'benchmark', ticker: 'SPY', name: 'S&P 500', sample_type: 'DAILY', point_date: '2026-02-03', point_value: 102.2 },
+    { series_key: 'SP500', series_type: 'benchmark', ticker: 'SPY', name: 'S&P 500', sample_type: 'DAILY', point_date: '2026-03-03', point_value: 104.8 },
+    { series_key: 'SP500', series_type: 'benchmark', ticker: 'SPY', name: 'S&P 500', sample_type: 'DAILY', point_date: '2026-04-10', point_value: 105.7 },
+    { series_key: 'SP500', series_type: 'benchmark', ticker: 'SPY', name: 'S&P 500', sample_type: 'WEEKLY', point_date: '2021-04-09', point_value: 100 },
+    { series_key: 'SP500', series_type: 'benchmark', ticker: 'SPY', name: 'S&P 500', sample_type: 'WEEKLY', point_date: '2022-04-08', point_value: 109 },
+    { series_key: 'SP500', series_type: 'benchmark', ticker: 'SPY', name: 'S&P 500', sample_type: 'WEEKLY', point_date: '2023-04-07', point_value: 114 },
+    { series_key: 'SP500', series_type: 'benchmark', ticker: 'SPY', name: 'S&P 500', sample_type: 'WEEKLY', point_date: '2024-04-12', point_value: 121 },
+    { series_key: 'SP500', series_type: 'benchmark', ticker: 'SPY', name: 'S&P 500', sample_type: 'WEEKLY', point_date: '2025-04-11', point_value: 127 },
+    { series_key: 'SP500', series_type: 'benchmark', ticker: 'SPY', name: 'S&P 500', sample_type: 'WEEKLY', point_date: '2026-04-10', point_value: 132 },
+    { series_key: 'NASDAQ100', series_type: 'benchmark', ticker: 'QQQ', name: 'Nasdaq 100', sample_type: 'DAILY', point_date: '2026-01-02', point_value: 100 },
+    { series_key: 'NASDAQ100', series_type: 'benchmark', ticker: 'QQQ', name: 'Nasdaq 100', sample_type: 'DAILY', point_date: '2026-02-03', point_value: 103.8 },
+    { series_key: 'NASDAQ100', series_type: 'benchmark', ticker: 'QQQ', name: 'Nasdaq 100', sample_type: 'DAILY', point_date: '2026-03-03', point_value: 106.1 },
+    { series_key: 'NASDAQ100', series_type: 'benchmark', ticker: 'QQQ', name: 'Nasdaq 100', sample_type: 'DAILY', point_date: '2026-04-10', point_value: 108.8 },
+    { series_key: 'NASDAQ100', series_type: 'benchmark', ticker: 'QQQ', name: 'Nasdaq 100', sample_type: 'WEEKLY', point_date: '2021-04-09', point_value: 100 },
+    { series_key: 'NASDAQ100', series_type: 'benchmark', ticker: 'QQQ', name: 'Nasdaq 100', sample_type: 'WEEKLY', point_date: '2022-04-08', point_value: 111 },
+    { series_key: 'NASDAQ100', series_type: 'benchmark', ticker: 'QQQ', name: 'Nasdaq 100', sample_type: 'WEEKLY', point_date: '2023-04-07', point_value: 116 },
+    { series_key: 'NASDAQ100', series_type: 'benchmark', ticker: 'QQQ', name: 'Nasdaq 100', sample_type: 'WEEKLY', point_date: '2024-04-12', point_value: 124 },
+    { series_key: 'NASDAQ100', series_type: 'benchmark', ticker: 'QQQ', name: 'Nasdaq 100', sample_type: 'WEEKLY', point_date: '2025-04-11', point_value: 129 },
+    { series_key: 'NASDAQ100', series_type: 'benchmark', ticker: 'QQQ', name: 'Nasdaq 100', sample_type: 'WEEKLY', point_date: '2026-04-10', point_value: 136 },
+    { series_key: 'DOW', series_type: 'benchmark', ticker: 'DIA', name: 'Dow Jones', sample_type: 'DAILY', point_date: '2026-01-02', point_value: 100 },
+    { series_key: 'DOW', series_type: 'benchmark', ticker: 'DIA', name: 'Dow Jones', sample_type: 'DAILY', point_date: '2026-02-03', point_value: 101.1 },
+    { series_key: 'DOW', series_type: 'benchmark', ticker: 'DIA', name: 'Dow Jones', sample_type: 'DAILY', point_date: '2026-03-03', point_value: 102.9 },
+    { series_key: 'DOW', series_type: 'benchmark', ticker: 'DIA', name: 'Dow Jones', sample_type: 'DAILY', point_date: '2026-04-10', point_value: 103.6 },
+    { series_key: 'DOW', series_type: 'benchmark', ticker: 'DIA', name: 'Dow Jones', sample_type: 'WEEKLY', point_date: '2021-04-09', point_value: 100 },
+    { series_key: 'DOW', series_type: 'benchmark', ticker: 'DIA', name: 'Dow Jones', sample_type: 'WEEKLY', point_date: '2022-04-08', point_value: 107 },
+    { series_key: 'DOW', series_type: 'benchmark', ticker: 'DIA', name: 'Dow Jones', sample_type: 'WEEKLY', point_date: '2023-04-07', point_value: 111 },
+    { series_key: 'DOW', series_type: 'benchmark', ticker: 'DIA', name: 'Dow Jones', sample_type: 'WEEKLY', point_date: '2024-04-12', point_value: 117 },
+    { series_key: 'DOW', series_type: 'benchmark', ticker: 'DIA', name: 'Dow Jones', sample_type: 'WEEKLY', point_date: '2025-04-11', point_value: 122 },
+    { series_key: 'DOW', series_type: 'benchmark', ticker: 'DIA', name: 'Dow Jones', sample_type: 'WEEKLY', point_date: '2026-04-10', point_value: 126 },
+  ],
 }
 
 const PREVIEW_SPREADSHEET = {
   id: 'dev-preview-workspace',
   title: '[Dev/Test] Workspace Preview',
   url: 'https://example.invalid/dev-preview-workspace',
-  sheets: ['Holdings', 'Watchlists', 'Monitor', 'Benchmarks'],
-  sheetIds: { Holdings: 0, Watchlists: 1, Monitor: 2, Benchmarks: 3 },
+  sheets: ['Holdings', 'Watchlists', 'Monitor', 'Benchmarks', 'SeriesCalendar', 'Series'],
+  sheetIds: { Holdings: 0, Watchlists: 1, Monitor: 2, Benchmarks: 3, SeriesCalendar: 4, Series: 5 },
   isTemplateValid: true,
   checkedAt: new Date('2026-04-10T00:00:00.000Z').toISOString(),
 } satisfies GoogleWorkspaceContextValue['spreadsheet']
+
+function buildSeedBenchmarkRows(existingRows: SpreadsheetSnapshot['benchmarks']) {
+  const existingByKey = new Map(existingRows.map((row) => [row.benchmark_key.trim().toUpperCase(), row]))
+  const defaultRows = DEFAULT_BENCHMARK_DRAFTS.map((draft) => {
+    const existing = existingByKey.get(draft.benchmarkKey)
+
+    return {
+      benchmark_key: draft.benchmarkKey,
+      ticker_primary: draft.tickerPrimary,
+      ticker_fallback: existing?.ticker_fallback ?? draft.tickerFallback,
+      resolved_ticker: existing?.resolved_ticker || draft.tickerPrimary,
+      resolved_source: existing?.resolved_source ?? 'primary',
+      status: existing?.status ?? 'ready',
+      market: draft.market,
+      name: draft.name,
+      category: draft.category,
+      is_default: true,
+      is_enabled: existing?.is_enabled ?? draft.isEnabled,
+      display_order: draft.displayOrder,
+      retry_count: existing?.retry_count ?? 0,
+    }
+  })
+
+  const customRows = existingRows
+    .filter((row) => !row.is_default)
+    .sort((left, right) => left.display_order - right.display_order)
+    .map((row, index) => ({
+      ...row,
+      display_order: DEFAULT_BENCHMARK_DRAFTS.length + index + 1,
+    }))
+
+  return [...defaultRows, ...customRows]
+}
 
 function collectMonitorTickers(snapshot: SpreadsheetSnapshot) {
   return [...new Set([
@@ -76,6 +164,19 @@ function collectMonitorTickers(snapshot: SpreadsheetSnapshot) {
     ...snapshot.watchlists.map((row) => row.ticker),
     ...snapshot.benchmarks.filter((row) => row.is_enabled).map((row) => row.resolved_ticker || row.ticker_primary),
   ].map((ticker) => ticker.trim().toUpperCase()).filter(Boolean))]
+}
+
+function hasBenchmarkSeries(snapshot: SpreadsheetSnapshot, benchmarkKey: string, ticker: string) {
+  const normalizedKey = benchmarkKey.trim().toUpperCase()
+  const normalizedTicker = ticker.trim().toUpperCase()
+
+  return snapshot.series.some((row) => (
+    row.series_type === 'benchmark'
+    && (
+      row.series_key.trim().toUpperCase() === normalizedKey
+      || row.ticker.trim().toUpperCase() === normalizedTicker
+    )
+  ))
 }
 
 export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
@@ -147,7 +248,10 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
       setErrorMessage(null)
 
       try {
-        await hydrateSpreadsheet(storedSpreadsheetId, session.accessToken, { syncMonitor: true })
+        const result = await refreshConnectedSpreadsheet(storedSpreadsheetId, session.accessToken, { syncSeries: false })
+        if (result.snapshot.series.length === 0) {
+          refreshSeriesInBackground(storedSpreadsheetId, session.accessToken)
+        }
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to reconnect saved spreadsheet.'
         setErrorMessage(message)
@@ -160,17 +264,38 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
     })()
   }, [busyState, session?.accessToken, spreadsheet?.id, storedSpreadsheetId])
 
-  async function hydrateSpreadsheet(spreadsheetId: string, accessToken: string, options?: { syncMonitor?: boolean }) {
-    const connection = await fetchSpreadsheetConnection(spreadsheetId, accessToken)
+  async function hydrateSpreadsheet(spreadsheetId: string, accessToken: string, options?: { syncMonitor?: boolean; syncSeries?: boolean }) {
+    let connection = await fetchSpreadsheetConnection(spreadsheetId, accessToken)
 
     if (connection.isTemplateValid) {
-      await rewriteTemplateHeaders(spreadsheetId, accessToken)
+      const ensuredSheets = await ensureOptionalTemplateTabs(spreadsheetId, accessToken, connection.sheets)
+      connection = ensuredSheets.length === connection.sheets.length
+        ? connection
+        : await fetchSpreadsheetConnection(spreadsheetId, accessToken)
+      await rewriteTemplateHeaders(spreadsheetId, accessToken, connection.sheets)
     }
 
     let nextSnapshot = await fetchSpreadsheetSnapshot(spreadsheetId, accessToken, connection.sheets)
 
+    const seededDefaultCount = nextSnapshot.benchmarks.filter((row) => row.is_default).length
+
+    if (connection.sheets.includes('Benchmarks') && seededDefaultCount < DEFAULT_BENCHMARK_DRAFTS.length) {
+      await overwriteBenchmarkRows(
+        spreadsheetId,
+        accessToken,
+        buildSeedBenchmarkRows(nextSnapshot.benchmarks),
+        connection.sheets,
+      )
+      nextSnapshot = await fetchSpreadsheetSnapshot(spreadsheetId, accessToken, connection.sheets)
+    }
+
     if (options?.syncMonitor) {
       await syncMonitorSheet(spreadsheetId, accessToken, collectMonitorTickers(nextSnapshot))
+      nextSnapshot = await fetchSpreadsheetSnapshot(spreadsheetId, accessToken, connection.sheets)
+    }
+
+    if (options?.syncSeries) {
+      await syncSeriesSheets(spreadsheetId, accessToken, nextSnapshot, connection.sheets)
       nextSnapshot = await fetchSpreadsheetSnapshot(spreadsheetId, accessToken, connection.sheets)
     }
 
@@ -181,6 +306,69 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
     window.localStorage.setItem(STORAGE_KEY, spreadsheetId)
 
     return { connection, snapshot: nextSnapshot }
+  }
+
+  async function refreshConnectedSpreadsheet(
+    spreadsheetId: string,
+    accessToken: string,
+    options?: { syncMonitor?: boolean; syncSeries?: boolean },
+  ) {
+    return hydrateSpreadsheet(spreadsheetId, accessToken, {
+      syncMonitor: options?.syncMonitor ?? true,
+      syncSeries: options?.syncSeries ?? true,
+    })
+  }
+
+  async function reloadSpreadsheetSnapshot(
+    spreadsheetId: string,
+    accessToken: string,
+    availableSheets?: string[],
+  ) {
+    const nextSnapshot = await fetchSpreadsheetSnapshot(spreadsheetId, accessToken, availableSheets ?? spreadsheet?.sheets)
+    setSnapshot(nextSnapshot)
+    return nextSnapshot
+  }
+
+  function refreshHoldingsInBackground(
+    spreadsheetId: string,
+    accessToken: string,
+    options?: { syncMonitor?: boolean },
+  ) {
+    void (async () => {
+      try {
+        if (options?.syncMonitor) {
+          await refreshConnectedSpreadsheet(spreadsheetId, accessToken, { syncMonitor: true, syncSeries: false })
+          return
+        }
+
+        await reloadSpreadsheetSnapshot(spreadsheetId, accessToken, spreadsheet?.sheets)
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to refresh holdings data.'
+        setErrorMessage(message)
+      }
+    })()
+  }
+
+  function refreshBenchmarksInBackground(
+    spreadsheetId: string,
+    accessToken: string,
+    options?: { syncMonitor?: boolean; syncSeries?: boolean },
+  ) {
+    void (async () => {
+      try {
+        await refreshConnectedSpreadsheet(spreadsheetId, accessToken, {
+          syncMonitor: options?.syncMonitor ?? true,
+          syncSeries: options?.syncSeries ?? true,
+        })
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to refresh benchmark data.'
+        setErrorMessage(message)
+      }
+    })()
+  }
+
+  function refreshSeriesInBackground(spreadsheetId: string, accessToken: string) {
+    refreshBenchmarksInBackground(spreadsheetId, accessToken, { syncMonitor: false, syncSeries: true })
   }
 
   async function login() {
@@ -222,7 +410,10 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
     setErrorMessage(null)
 
     try {
-      await hydrateSpreadsheet(trimmedId, session.accessToken, { syncMonitor: true })
+      const result = await refreshConnectedSpreadsheet(trimmedId, session.accessToken, { syncSeries: false })
+      if (result.snapshot.series.length === 0) {
+        refreshSeriesInBackground(trimmedId, session.accessToken)
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to connect spreadsheet.'
       setErrorMessage(message)
@@ -246,7 +437,8 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
 
     try {
       const connection = await createTemplateSpreadsheet(trimmedTitle, session.accessToken)
-      await hydrateSpreadsheet(connection.id, session.accessToken, { syncMonitor: true })
+      await refreshConnectedSpreadsheet(connection.id, session.accessToken, { syncSeries: false })
+      refreshSeriesInBackground(connection.id, session.accessToken)
       setValidationMessage('Template spreadsheet created and connected.')
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to create spreadsheet template.'
@@ -266,7 +458,7 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
     setErrorMessage(null)
 
     try {
-      await hydrateSpreadsheet(spreadsheet.id, session.accessToken, { syncMonitor: true })
+      await refreshConnectedSpreadsheet(spreadsheet.id, session.accessToken, { syncSeries: false })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to refresh spreadsheet data.'
       setErrorMessage(message)
@@ -286,7 +478,7 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
 
     try {
       await resetSpreadsheetRows(spreadsheet.id, session.accessToken, spreadsheet.sheets)
-      await hydrateSpreadsheet(spreadsheet.id, session.accessToken, { syncMonitor: true })
+      await refreshConnectedSpreadsheet(spreadsheet.id, session.accessToken, { syncSeries: false })
       setValidationMessage('Sheet rows were reset. Headers were preserved.')
       return true
     } catch (error) {
@@ -311,6 +503,8 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
       const normalizedTicker = draft.ticker.trim().toUpperCase()
       const normalizedName = draft.name.trim() || normalizedTicker
       const nextDisplayOrder = snapshot.holdings.reduce((maxOrder, row) => Math.max(maxOrder, Number(row.display_order) || 0), 0) + 1
+      const nextRowNumber = snapshot.holdings.reduce((maxRowNumber, row) => Math.max(maxRowNumber, row.row_number), 1) + 1
+      const shouldSyncMonitor = !snapshot.monitor.some((row) => row.ticker.trim().toUpperCase() === normalizedTicker)
 
       await appendHoldingRow(spreadsheet.id, session.accessToken, {
         row_number: 0,
@@ -323,7 +517,23 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
         display_order: nextDisplayOrder,
       })
 
-      await hydrateSpreadsheet(spreadsheet.id, session.accessToken, { syncMonitor: true })
+      setSnapshot((current) => ({
+        ...current,
+        holdings: [
+          ...current.holdings,
+          {
+            row_number: nextRowNumber,
+            ticker: normalizedTicker,
+            name: normalizedName,
+            side: draft.side,
+            quantity: draft.quantity,
+            avg_price: draft.avgPrice,
+            tags: draft.tags.trim(),
+            display_order: nextDisplayOrder,
+          },
+        ],
+      }))
+      refreshHoldingsInBackground(spreadsheet.id, session.accessToken, { syncMonitor: shouldSyncMonitor })
       return true
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to save holding.'
@@ -353,9 +563,13 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
       await deleteSheetRows(spreadsheet.id, session.accessToken, spreadsheet.sheetIds.Holdings, targetRows.map((row) => row.row_number))
       const normalizedTicker = draft.ticker.trim().toUpperCase()
       const normalizedName = draft.name.trim() || normalizedTicker
+      const originalTicker = ticker.trim().toUpperCase()
+      const nextRowNumber = snapshot.holdings.reduce((maxRowNumber, row) => Math.max(maxRowNumber, row.row_number), 1) + 1
       const preservedDisplayOrder = targetRows
         .map((row) => Number(row.display_order) || 0)
         .find((value) => value > 0) ?? 1
+      const shouldSyncMonitor = normalizedTicker !== originalTicker
+        && !snapshot.monitor.some((row) => row.ticker.trim().toUpperCase() === normalizedTicker)
       await appendHoldingRow(spreadsheet.id, session.accessToken, {
         row_number: 0,
         ticker: normalizedTicker,
@@ -366,7 +580,23 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
         tags: draft.tags.trim(),
         display_order: preservedDisplayOrder,
       })
-      await hydrateSpreadsheet(spreadsheet.id, session.accessToken, { syncMonitor: true })
+      setSnapshot((current) => ({
+        ...current,
+        holdings: [
+          ...current.holdings.filter((row) => row.ticker !== ticker),
+          {
+            row_number: nextRowNumber,
+            ticker: normalizedTicker,
+            name: normalizedName,
+            side: draft.side,
+            quantity: draft.quantity,
+            avg_price: draft.avgPrice,
+            tags: draft.tags.trim(),
+            display_order: preservedDisplayOrder,
+          },
+        ],
+      }))
+      refreshHoldingsInBackground(spreadsheet.id, session.accessToken, { syncMonitor: shouldSyncMonitor })
       return true
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to update holding.'
@@ -394,7 +624,11 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
 
     try {
       await deleteSheetRows(spreadsheet.id, session.accessToken, spreadsheet.sheetIds.Holdings, targetRows)
-      await hydrateSpreadsheet(spreadsheet.id, session.accessToken, { syncMonitor: true })
+      setSnapshot((current) => ({
+        ...current,
+        holdings: current.holdings.filter((row) => row.ticker !== ticker),
+      }))
+      refreshHoldingsInBackground(spreadsheet.id, session.accessToken, { syncMonitor: false })
       return true
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to delete holding rows.'
@@ -444,7 +678,14 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
         })
 
       await overwriteHoldingRows(spreadsheet.id, session.accessToken, nextRows)
-      await hydrateSpreadsheet(spreadsheet.id, session.accessToken, { syncMonitor: true })
+      setSnapshot((current) => ({
+        ...current,
+        holdings: nextRows,
+      }))
+      void reloadSpreadsheetSnapshot(spreadsheet.id, session.accessToken, spreadsheet.sheets).catch((error) => {
+        const message = error instanceof Error ? error.message : 'Failed to refresh reordered holdings.'
+        setErrorMessage(message)
+      })
       return true
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to save holding order.'
@@ -502,9 +743,41 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
           retry_count: shouldResetResolution ? 0 : currentRow.retry_count,
         }
       })
+      const nextEnabledRows = nextRows.filter((row) => row.is_enabled)
+      const shouldSyncMonitor = nextEnabledRows.some((row) => {
+        const resolvedTicker = (row.resolved_ticker || row.ticker_primary).trim().toUpperCase()
+        return resolvedTicker.length > 0
+          && !snapshot.monitor.some((monitorRow) => monitorRow.ticker.trim().toUpperCase() === resolvedTicker)
+      })
+      const shouldSyncSeries = nextEnabledRows.some((row) => {
+        const currentRow = currentRowsByKey.get(row.benchmark_key)
+        const resolvedTicker = (row.resolved_ticker || row.ticker_primary).trim().toUpperCase()
+        const isNewRow = !currentRow
+        const tickerChanged = currentRow
+          ? currentRow.ticker_primary.trim().toUpperCase() !== row.ticker_primary
+            || currentRow.ticker_fallback.trim().toUpperCase() !== row.ticker_fallback
+          : false
+        const becameEnabled = currentRow ? !currentRow.is_enabled && row.is_enabled : row.is_enabled
+
+        return row.is_enabled && (
+          isNewRow
+          || tickerChanged
+          || becameEnabled
+          || !hasBenchmarkSeries(snapshot, row.benchmark_key, resolvedTicker)
+        )
+      })
 
       await overwriteBenchmarkRows(spreadsheet.id, session.accessToken, nextRows, spreadsheet.sheets)
-      await hydrateSpreadsheet(spreadsheet.id, session.accessToken, { syncMonitor: true })
+      setSnapshot((current) => ({
+        ...current,
+        benchmarks: nextRows,
+      }))
+      if (shouldSyncMonitor || shouldSyncSeries) {
+        refreshBenchmarksInBackground(spreadsheet.id, session.accessToken, {
+          syncMonitor: shouldSyncMonitor,
+          syncSeries: shouldSyncSeries,
+        })
+      }
       return true
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to save benchmarks.'
@@ -538,7 +811,7 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
         tags: draft.tags.trim(),
       })
 
-      await hydrateSpreadsheet(spreadsheet.id, session.accessToken, { syncMonitor: true })
+      await refreshConnectedSpreadsheet(spreadsheet.id, session.accessToken, { syncSeries: false })
       return true
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to save watchlist row.'
@@ -572,7 +845,7 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
         virtual_entry_price: draft.virtualEntryPrice,
         tags: draft.tags.trim(),
       })
-      await hydrateSpreadsheet(spreadsheet.id, session.accessToken, { syncMonitor: true })
+      await refreshConnectedSpreadsheet(spreadsheet.id, session.accessToken, { syncSeries: false })
       return true
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to update watchlist row.'
@@ -594,7 +867,7 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
 
     try {
       await deleteSheetRows(spreadsheet.id, session.accessToken, spreadsheet.sheetIds.Watchlists, [rowNumber])
-      await hydrateSpreadsheet(spreadsheet.id, session.accessToken, { syncMonitor: true })
+      await refreshConnectedSpreadsheet(spreadsheet.id, session.accessToken, { syncSeries: false })
       return true
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to delete watchlist row.'

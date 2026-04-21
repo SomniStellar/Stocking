@@ -46,8 +46,6 @@ function getMonitorBasePrice(row: SpreadsheetSnapshot['monitor'][number] | undef
   switch (period) {
     case 'YTD':
       return toNumber(row.ytd_price)
-    case '1Y':
-      return toNumber(row.price_1y)
     case '3Y':
       return toNumber(row.price_3y)
     case '5Y':
@@ -59,8 +57,6 @@ function getHoldingPeriodReturn(row: HoldingRow, period: ComparisonPeriod) {
   switch (period) {
     case 'YTD':
       return row.ytdReturn
-    case '1Y':
-      return row.return1Y
     case '3Y':
       return row.return3Y
     case '5Y':
@@ -69,6 +65,10 @@ function getHoldingPeriodReturn(row: HoldingRow, period: ComparisonPeriod) {
 }
 
 export function calculatePortfolioPeriodReturn(holdings: HoldingRow[], period: ComparisonPeriod) {
+  return calculatePortfolioPeriodPerformance(holdings, period).returnRate
+}
+
+export function calculatePortfolioPeriodPerformance(holdings: HoldingRow[], period: ComparisonPeriod) {
   const totals = holdings.reduce(
     (sum, row) => {
       const currentValue = row.quantity * row.closeyest
@@ -93,10 +93,22 @@ export function calculatePortfolioPeriodReturn(holdings: HoldingRow[], period: C
   )
 
   if (totals.base <= 0) {
-    return 0
+    return {
+      currentValue: totals.current,
+      baseValue: totals.base,
+      profitAmount: 0,
+      returnRate: 0,
+    }
   }
 
-  return ((totals.current - totals.base) / totals.base) * 100
+  const profitAmount = totals.current - totals.base
+
+  return {
+    currentValue: totals.current,
+    baseValue: totals.base,
+    profitAmount,
+    returnRate: (profitAmount / totals.base) * 100,
+  }
 }
 
 export function buildBenchmarkRows(snapshot: SpreadsheetSnapshot): BenchmarkDefinition[] {
@@ -204,16 +216,18 @@ export function createBenchmarkStatusCaption(
   status: BenchmarkStatus,
   resolvedSource: BenchmarkResolvedSource,
 ) {
+  void name
+
   if (status === 'failed') {
-    return `${name} failed to load and was excluded.`
+    return 'Data unavailable.'
   }
 
   if (resolvedSource === 'fallback' || status === 'fallback') {
-    return `${name} is using a fallback ticker.`
+    return 'Fallback ticker in use.'
   }
 
   if (status === 'retrying') {
-    return `${name} is retrying.`
+    return 'Retrying...'
   }
 
   return ''
@@ -223,8 +237,6 @@ export function createComparisonPeriodLabel(period: ComparisonPeriod) {
   switch (period) {
     case 'YTD':
       return 'YTD'
-    case '1Y':
-      return '1Y'
     case '3Y':
       return '3Y'
     case '5Y':

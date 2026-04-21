@@ -35,6 +35,10 @@ type DragTargetState = {
   placement: HoldingDropPlacement
 } | null
 
+function getHoldingActionLabel(side: HoldingDraft['side']) {
+  return side === 'BUY' ? 'Add' : 'Reduce'
+}
+
 export function HoldingsPage() {
   const {
     addHolding,
@@ -51,7 +55,7 @@ export function HoldingsPage() {
   const [formMessage, setFormMessage] = useState<string | null>(null)
   const [showHoldingForm, setShowHoldingForm] = useState(false)
   const [activeTag, setActiveTag] = useState('all')
-  const [costInputMode, setCostInputMode] = useState<CostInputMode>('avg')
+  const [costInputMode, setCostInputMode] = useState<CostInputMode>('total')
   const [costInput, setCostInput] = useState(0)
   const [editingTicker, setEditingTicker] = useState<string | null>(null)
   const [highlightedTicker, setHighlightedTicker] = useState<string | null>(null)
@@ -114,7 +118,7 @@ export function HoldingsPage() {
 
   function resetDraft() {
     setDraft(INITIAL_DRAFT)
-    setCostInputMode('avg')
+    setCostInputMode('total')
     setCostInput(0)
     setFormMessage(null)
   }
@@ -129,8 +133,8 @@ export function HoldingsPage() {
     const nextDraft = buildHoldingDraft(row)
     setEditingTicker(row.ticker)
     setDraft(nextDraft)
-    setCostInputMode('avg')
-    setCostInput(row.avgPrice)
+    setCostInputMode('total')
+    setCostInput(Number((nextDraft.avgPrice * nextDraft.quantity).toFixed(6)))
     setFormMessage(null)
     setShowHoldingForm(false)
   }
@@ -149,21 +153,36 @@ export function HoldingsPage() {
     setDraft((current) => ({ ...current, side: current.side === 'BUY' ? 'SELL' : 'BUY' }))
   }
 
+  function getAveragePriceFromInput(mode: CostInputMode, inputValue: number, quantity: number, fallbackAvgPrice: number) {
+    if (mode === 'avg') {
+      return inputValue > 0 ? inputValue : fallbackAvgPrice
+    }
+
+    if (quantity > 0 && inputValue > 0) {
+      return inputValue / quantity
+    }
+
+    return fallbackAvgPrice
+  }
+
+  function getCostInputFromAveragePrice(mode: CostInputMode, avgPrice: number, quantity: number) {
+    if (avgPrice <= 0) {
+      return 0
+    }
+
+    if (mode === 'avg') {
+      return Number(avgPrice.toFixed(6))
+    }
+
+    return quantity > 0 ? Number((avgPrice * quantity).toFixed(6)) : 0
+  }
+
   function toggleCostMode() {
     setCostInputMode((current) => {
       const nextMode = current === 'avg' ? 'total' : 'avg'
+      const normalizedAvgPrice = getAveragePriceFromInput(current, costInput, draft.quantity, draft.avgPrice)
 
-      setCostInput((existing) => {
-        if (draft.quantity <= 0 || existing <= 0) {
-          return existing
-        }
-
-        if (nextMode === 'total') {
-          return Number((existing * draft.quantity).toFixed(6))
-        }
-
-        return Number((existing / draft.quantity).toFixed(6))
-      })
+      setCostInput(getCostInputFromAveragePrice(nextMode, normalizedAvgPrice, draft.quantity))
       setFormMessage(null)
       return nextMode
     })
@@ -211,7 +230,7 @@ export function HoldingsPage() {
       return
     }
 
-    setFormMessage(editingTicker ? `${normalizedTicker} updated.` : `${draft.side} saved.`)
+    setFormMessage(editingTicker ? `${normalizedTicker} updated.` : `${getHoldingActionLabel(draft.side)} saved.`)
     setHighlightedTicker(normalizedTicker)
 
     if (editingTicker) {
@@ -353,8 +372,9 @@ export function HoldingsPage() {
               className={`toggle-button toggle-button-side ${draft.side === 'BUY' ? 'toggle-button-buy' : 'toggle-button-sell'}`}
               type="button"
               onClick={toggleSide}
+              aria-label={draft.side === 'BUY' ? 'Switch to reduce position' : 'Switch to add position'}
             >
-              {draft.side}
+              {getHoldingActionLabel(draft.side)}
             </button>
           </div>
 
@@ -563,6 +583,7 @@ export function HoldingsPage() {
       <SectionCard
         title="Holdings"
         description="Manual order with tag filtering."
+        headClassName="fixed-track-420-3-2-1"
         actions={(
           <label className="field-inline field-inline-compact" htmlFor="holding-tag-filter">
             <span>Tag</span>

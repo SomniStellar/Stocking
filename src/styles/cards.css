@@ -112,6 +112,18 @@
   margin-bottom: 8px;
 }
 
+.fixed-track-280-4-3-2-1 {
+  width: min(100%, 1168px);
+  max-width: 1168px;
+  margin-inline: auto;
+}
+
+.fixed-track-420-3-2-1 {
+  width: min(100%, 1290px);
+  max-width: 1290px;
+  margin-inline: auto;
+}
+
 .section-card-title-group {
   display: grid;
   gap: 6px;
@@ -361,12 +373,22 @@
     max-width: 854px;
     grid-template-columns: repeat(2, 420px) !important;
   }
+
+  .fixed-track-420-3-2-1 {
+    width: min(100%, 854px);
+    max-width: 854px;
+  }
 }
 
 @media (max-width: 1264px) {
   .fixed-grid-280-4-3-2-1 {
     width: min(100%, 872px);
     grid-template-columns: repeat(3, 280px);
+  }
+
+  .fixed-track-280-4-3-2-1 {
+    width: min(100%, 872px);
+    max-width: 872px;
   }
 }
 
@@ -387,6 +409,11 @@
   .fixed-grid-280-4-3-2-1 {
     width: min(100%, 576px);
     grid-template-columns: repeat(2, 280px);
+  }
+
+  .fixed-track-280-4-3-2-1 {
+    width: min(100%, 576px);
+    max-width: 576px;
   }
 }
 
@@ -443,6 +470,11 @@
     width: min(100%, 280px);
     grid-template-columns: minmax(0, 280px);
   }
+
+  .fixed-track-280-4-3-2-1 {
+    width: min(100%, 280px);
+    max-width: 280px;
+  }
 }
 
 @media (max-width: 430px) {
@@ -452,6 +484,12 @@
     max-width: 100%;
     grid-template-columns: minmax(0, 1fr) !important;
     --fixed-card-width: 100%;
+  }
+
+  .fixed-track-280-4-3-2-1,
+  .fixed-track-420-3-2-1 {
+    width: 100%;
+    max-width: 100%;
   }
 }
 
