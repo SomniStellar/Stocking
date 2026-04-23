@@ -1,4 +1,5 @@
-﻿import type { BenchmarkDefinition, BenchmarkDraft } from '../../types/domain'
+import type { BenchmarkDefinition, BenchmarkDraft } from '../../types/domain'
+import { getRecommendedBenchmarkAccentColor } from './benchmarkAccent'
 
 export const EMPTY_BENCHMARK_FORM = {
   benchmarkKey: '',
@@ -15,6 +16,7 @@ export const DEFAULT_BENCHMARK_DRAFTS: BenchmarkDraft[] = [
     tickerFallback: '',
     category: 'INDEX',
     market: 'US',
+    accentColor: getRecommendedBenchmarkAccentColor('NASDAQ100'),
     isDefault: true,
     isEnabled: true,
     displayOrder: 1,
@@ -26,6 +28,7 @@ export const DEFAULT_BENCHMARK_DRAFTS: BenchmarkDraft[] = [
     tickerFallback: '',
     category: 'INDEX',
     market: 'US',
+    accentColor: getRecommendedBenchmarkAccentColor('SP500'),
     isDefault: true,
     isEnabled: true,
     displayOrder: 2,
@@ -37,6 +40,7 @@ export const DEFAULT_BENCHMARK_DRAFTS: BenchmarkDraft[] = [
     tickerFallback: '',
     category: 'INDEX',
     market: 'US',
+    accentColor: getRecommendedBenchmarkAccentColor('DOW'),
     isDefault: true,
     isEnabled: true,
     displayOrder: 3,
@@ -48,6 +52,7 @@ export const DEFAULT_BENCHMARK_DRAFTS: BenchmarkDraft[] = [
     tickerFallback: '',
     category: 'INDEX',
     market: 'KR',
+    accentColor: getRecommendedBenchmarkAccentColor('KOSPI'),
     isDefault: true,
     isEnabled: false,
     displayOrder: 4,
@@ -59,6 +64,7 @@ export const DEFAULT_BENCHMARK_DRAFTS: BenchmarkDraft[] = [
     tickerFallback: '',
     category: 'INDEX',
     market: 'KR',
+    accentColor: getRecommendedBenchmarkAccentColor('KOSDAQ'),
     isDefault: true,
     isEnabled: false,
     displayOrder: 5,
@@ -73,6 +79,7 @@ export function toBenchmarkDrafts(rows: BenchmarkDefinition[]): BenchmarkDraft[]
     tickerFallback: row.tickerFallback,
     category: row.category || 'INDEX',
     market: row.market || 'US',
+    accentColor: row.accentColor,
     isDefault: row.isDefault,
     isEnabled: row.isEnabled,
     displayOrder: row.displayOrder,

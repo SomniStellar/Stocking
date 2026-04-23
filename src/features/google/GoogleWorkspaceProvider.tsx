@@ -55,9 +55,9 @@ const PREVIEW_HOLDINGS_SNAPSHOT: SpreadsheetSnapshot = {
     { ticker: 'NVDA', full_ticker: 'NASDAQ:NVDA', closeyest: 924.36, ytd_price: 801.2, price_1y: 745.22, price_3y: 461.15, price_5y: 217.7, tradetime: '2026-04-10 09:00' },
   ],
   benchmarks: [
-    { benchmark_key: 'SP500', ticker_primary: 'SPY', ticker_fallback: '', resolved_ticker: 'SPY', resolved_source: 'primary', status: 'ready', market: 'US', name: 'S&P 500', category: 'INDEX', is_default: true, is_enabled: true, display_order: 1, retry_count: 0 },
-    { benchmark_key: 'NASDAQ100', ticker_primary: 'QQQ', ticker_fallback: '', resolved_ticker: 'QQQ', resolved_source: 'primary', status: 'ready', market: 'US', name: 'Nasdaq 100', category: 'INDEX', is_default: true, is_enabled: true, display_order: 2, retry_count: 0 },
-    { benchmark_key: 'DOW', ticker_primary: 'DIA', ticker_fallback: '', resolved_ticker: 'DIA', resolved_source: 'primary', status: 'ready', market: 'US', name: 'Dow Jones', category: 'INDEX', is_default: true, is_enabled: true, display_order: 3, retry_count: 0 },
+    { benchmark_key: 'NASDAQ100', ticker_primary: 'QQQ', ticker_fallback: '', resolved_ticker: 'QQQ', resolved_source: 'primary', status: 'ready', market: 'US', name: 'Nasdaq 100', category: 'INDEX', accent_color: '#8dc6ff', is_default: true, is_enabled: true, display_order: 1, retry_count: 0 },
+    { benchmark_key: 'SP500', ticker_primary: 'SPY', ticker_fallback: '', resolved_ticker: 'SPY', resolved_source: 'primary', status: 'ready', market: 'US', name: 'S&P 500', category: 'INDEX', accent_color: '#78e0a5', is_default: true, is_enabled: true, display_order: 2, retry_count: 0 },
+    { benchmark_key: 'DOW', ticker_primary: 'DIA', ticker_fallback: '', resolved_ticker: 'DIA', resolved_source: 'primary', status: 'ready', market: 'US', name: 'Dow Jones', category: 'INDEX', accent_color: '#ffd28a', is_default: true, is_enabled: true, display_order: 3, retry_count: 0 },
   ],
   seriesCalendar: [
     { calendar_key: 'CAL_D_2026_01_02', calendar_type: 'DAILY', point_date: '2026-01-02', week_anchor: '', period_scope: 'YTD' },
@@ -72,16 +72,16 @@ const PREVIEW_HOLDINGS_SNAPSHOT: SpreadsheetSnapshot = {
     { calendar_key: 'CAL_W_2026_04_10', calendar_type: 'WEEKLY', point_date: '2026-04-10', week_anchor: '2026-04-10', period_scope: 'LONG' },
   ],
   series: [
-    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'DAILY', point_date: '2026-01-02', point_value: 100 },
-    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'DAILY', point_date: '2026-02-03', point_value: 104.5 },
-    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'DAILY', point_date: '2026-03-03', point_value: 108.2 },
-    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'DAILY', point_date: '2026-04-10', point_value: 111.6 },
-    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'WEEKLY', point_date: '2021-04-09', point_value: 100 },
-    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'WEEKLY', point_date: '2022-04-08', point_value: 112 },
-    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'WEEKLY', point_date: '2023-04-07', point_value: 118 },
-    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'WEEKLY', point_date: '2024-04-12', point_value: 126 },
-    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'WEEKLY', point_date: '2025-04-11', point_value: 133 },
-    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'WEEKLY', point_date: '2026-04-10', point_value: 141 },
+    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'DAILY', point_date: '2026-01-02', point_value: 11762.84 },
+    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'DAILY', point_date: '2026-02-03', point_value: 12106.8 },
+    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'DAILY', point_date: '2026-03-03', point_value: 12414.55 },
+    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'DAILY', point_date: '2026-04-10', point_value: 12837.5 },
+    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'WEEKLY', point_date: '2021-04-09', point_value: 9102.48 },
+    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'WEEKLY', point_date: '2022-04-08', point_value: 10215.74 },
+    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'WEEKLY', point_date: '2023-04-07', point_value: 10804.27 },
+    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'WEEKLY', point_date: '2024-04-12', point_value: 11526.31 },
+    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'WEEKLY', point_date: '2025-04-11', point_value: 12134.62 },
+    { series_key: 'PORTFOLIO', series_type: 'portfolio', ticker: 'PORTFOLIO', name: 'Portfolio', sample_type: 'WEEKLY', point_date: '2026-04-10', point_value: 12837.5 },
     { series_key: 'SP500', series_type: 'benchmark', ticker: 'SPY', name: 'S&P 500', sample_type: 'DAILY', point_date: '2026-01-02', point_value: 100 },
     { series_key: 'SP500', series_type: 'benchmark', ticker: 'SPY', name: 'S&P 500', sample_type: 'DAILY', point_date: '2026-02-03', point_value: 102.2 },
     { series_key: 'SP500', series_type: 'benchmark', ticker: 'SPY', name: 'S&P 500', sample_type: 'DAILY', point_date: '2026-03-03', point_value: 104.8 },
@@ -117,7 +117,7 @@ const PREVIEW_HOLDINGS_SNAPSHOT: SpreadsheetSnapshot = {
 
 const PREVIEW_SPREADSHEET = {
   id: 'dev-preview-workspace',
-  title: '[Dev/Test] Workspace Preview',
+  title: 'Workspace Preview',
   url: 'https://example.invalid/dev-preview-workspace',
   sheets: ['Holdings', 'Watchlists', 'Monitor', 'Benchmarks', 'SeriesCalendar', 'Series'],
   sheetIds: { Holdings: 0, Watchlists: 1, Monitor: 2, Benchmarks: 3, SeriesCalendar: 4, Series: 5 },
@@ -130,19 +130,20 @@ function buildSeedBenchmarkRows(existingRows: SpreadsheetSnapshot['benchmarks'])
   const defaultRows = DEFAULT_BENCHMARK_DRAFTS.map((draft) => {
     const existing = existingByKey.get(draft.benchmarkKey)
 
-    return {
-      benchmark_key: draft.benchmarkKey,
-      ticker_primary: draft.tickerPrimary,
-      ticker_fallback: existing?.ticker_fallback ?? draft.tickerFallback,
-      resolved_ticker: existing?.resolved_ticker || draft.tickerPrimary,
-      resolved_source: existing?.resolved_source ?? 'primary',
-      status: existing?.status ?? 'ready',
-      market: draft.market,
-      name: draft.name,
-      category: draft.category,
-      is_default: true,
-      is_enabled: existing?.is_enabled ?? draft.isEnabled,
-      display_order: draft.displayOrder,
+      return {
+        benchmark_key: draft.benchmarkKey,
+        ticker_primary: draft.tickerPrimary,
+        ticker_fallback: existing?.ticker_fallback ?? draft.tickerFallback,
+        resolved_ticker: existing?.resolved_ticker || draft.tickerPrimary,
+        resolved_source: existing?.resolved_source ?? 'primary',
+        status: existing?.status ?? 'ready',
+        market: draft.market,
+        name: draft.name,
+        category: draft.category,
+        accent_color: existing?.accent_color ?? draft.accentColor,
+        is_default: true,
+        is_enabled: existing?.is_enabled ?? draft.isEnabled,
+        display_order: draft.displayOrder,
       retry_count: existing?.retry_count ?? 0,
     }
   })
@@ -210,14 +211,14 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
       accessToken: 'dev-preview-token',
       profile: {
         email: 'preview@stocking.local',
-        name: '[Dev/Test] Workspace Preview',
+        name: 'Workspace Preview',
       },
     })
     setSpreadsheet(PREVIEW_SPREADSHEET)
     setSnapshot(PREVIEW_HOLDINGS_SNAPSHOT)
     setStoredSpreadsheetId('')
-    setValidationMessage('[Dev/Test] Preview data is active.')
-    setErrorMessage('[Dev/Test] Preview mode bypasses live Google Sheets and renders sample data for layout review.')
+    setValidationMessage(null)
+    setErrorMessage(null)
     setClientReady(true)
   }, [])
 
@@ -248,10 +249,14 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
       setErrorMessage(null)
 
       try {
-        const result = await refreshConnectedSpreadsheet(storedSpreadsheetId, session.accessToken, { syncSeries: false })
-        if (result.snapshot.series.length === 0) {
-          refreshSeriesInBackground(storedSpreadsheetId, session.accessToken)
-        }
+        await refreshConnectedSpreadsheet(storedSpreadsheetId, session.accessToken, {
+          syncMonitor: false,
+          syncSeries: false,
+        })
+        refreshBenchmarksInBackground(storedSpreadsheetId, session.accessToken, {
+          syncMonitor: true,
+          syncSeries: true,
+        })
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to reconnect saved spreadsheet.'
         setErrorMessage(message)
@@ -269,10 +274,14 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
 
     if (connection.isTemplateValid) {
       const ensuredSheets = await ensureOptionalTemplateTabs(spreadsheetId, accessToken, connection.sheets)
-      connection = ensuredSheets.length === connection.sheets.length
-        ? connection
-        : await fetchSpreadsheetConnection(spreadsheetId, accessToken)
-      await rewriteTemplateHeaders(spreadsheetId, accessToken, connection.sheets)
+      const optionalTabsAdded = ensuredSheets.length !== connection.sheets.length
+      connection = optionalTabsAdded
+        ? await fetchSpreadsheetConnection(spreadsheetId, accessToken)
+        : connection
+
+      if (optionalTabsAdded) {
+        await rewriteTemplateHeaders(spreadsheetId, accessToken, connection.sheets)
+      }
     }
 
     let nextSnapshot = await fetchSpreadsheetSnapshot(spreadsheetId, accessToken, connection.sheets)
@@ -367,10 +376,6 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
     })()
   }
 
-  function refreshSeriesInBackground(spreadsheetId: string, accessToken: string) {
-    refreshBenchmarksInBackground(spreadsheetId, accessToken, { syncMonitor: false, syncSeries: true })
-  }
-
   async function login() {
     if (!envConfigured) {
       setErrorMessage('Set VITE_GOOGLE_CLIENT_ID before testing Google login.')
@@ -410,10 +415,14 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
     setErrorMessage(null)
 
     try {
-      const result = await refreshConnectedSpreadsheet(trimmedId, session.accessToken, { syncSeries: false })
-      if (result.snapshot.series.length === 0) {
-        refreshSeriesInBackground(trimmedId, session.accessToken)
-      }
+      await refreshConnectedSpreadsheet(trimmedId, session.accessToken, {
+        syncMonitor: false,
+        syncSeries: false,
+      })
+      refreshBenchmarksInBackground(trimmedId, session.accessToken, {
+        syncMonitor: true,
+        syncSeries: true,
+      })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to connect spreadsheet.'
       setErrorMessage(message)
@@ -437,8 +446,14 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
 
     try {
       const connection = await createTemplateSpreadsheet(trimmedTitle, session.accessToken)
-      await refreshConnectedSpreadsheet(connection.id, session.accessToken, { syncSeries: false })
-      refreshSeriesInBackground(connection.id, session.accessToken)
+      await refreshConnectedSpreadsheet(connection.id, session.accessToken, {
+        syncMonitor: false,
+        syncSeries: false,
+      })
+      refreshBenchmarksInBackground(connection.id, session.accessToken, {
+        syncMonitor: true,
+        syncSeries: true,
+      })
       setValidationMessage('Template spreadsheet created and connected.')
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to create spreadsheet template.'
@@ -737,6 +752,7 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
           market: draft.market.trim().toUpperCase() || 'US',
           name: draft.name.trim() || benchmarkKey,
           category: draft.category.trim() || 'INDEX',
+          accent_color: draft.accentColor,
           is_default: draft.isDefault,
           is_enabled: draft.isEnabled,
           display_order: draft.displayOrder,

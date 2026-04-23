@@ -15,8 +15,7 @@ import {
   validateBenchmarkRows,
 } from './benchmarkData'
 import { buildHoldingRows } from './sheetData'
-
-const CHART_LINE_COLORS = ['#8dc6ff', '#78e0a5', '#ffd28a', '#ff8a80', '#c9a7ff', '#74d7d1']
+import { DEFAULT_PORTFOLIO_ACCENT_COLOR } from '../features/benchmarks/benchmarkAccent'
 
 interface DashboardComparisonViewModel {
   benchmarkRows: BenchmarkDefinition[]
@@ -65,10 +64,10 @@ function buildDashboardSummary(holdings: ReturnType<typeof buildHoldingRows>): D
 function buildChartLines(comparisonCards: BenchmarkComparisonCard[]) {
   const visibleBenchmarks = comparisonCards
     .filter((card) => card.isEnabled && card.isRenderable && card.status !== 'failed')
-    .map((card, index) => ({
+    .map((card) => ({
       benchmarkKey: card.benchmarkKey,
       name: card.name,
-      color: CHART_LINE_COLORS[index % CHART_LINE_COLORS.length],
+      color: card.accentColor,
       isPortfolio: false,
     }))
 
@@ -76,7 +75,7 @@ function buildChartLines(comparisonCards: BenchmarkComparisonCard[]) {
     {
       benchmarkKey: 'portfolio',
       name: 'Portfolio',
-      color: '#f6a55b',
+      color: DEFAULT_PORTFOLIO_ACCENT_COLOR,
       isPortfolio: true,
     },
     ...visibleBenchmarks,

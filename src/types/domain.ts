@@ -23,6 +23,7 @@ export interface BenchmarkDefinition {
   market: string
   name: string
   category: string
+  accentColor: string
   isDefault: boolean
   isEnabled: boolean
   displayOrder: number
@@ -36,6 +37,7 @@ export interface BenchmarkDraft {
   tickerFallback: string
   category: string
   market: string
+  accentColor: string
   isDefault: boolean
   isEnabled: boolean
   displayOrder: number
@@ -68,6 +70,7 @@ export interface BenchmarkComparisonCard {
   value: number
   deltaFromPortfolio: number
   caption: string
+  accentColor: string
   isEnabled: boolean
   isRenderable: boolean
   isDefault: boolean

@@ -134,7 +134,7 @@ export function HoldingsPage() {
     setEditingTicker(row.ticker)
     setDraft(nextDraft)
     setCostInputMode('total')
-    setCostInput(Number((nextDraft.avgPrice * nextDraft.quantity).toFixed(6)))
+    setCostInput(Number((nextDraft.avgPrice * nextDraft.quantity).toFixed(2)))
     setFormMessage(null)
     setShowHoldingForm(false)
   }
@@ -171,20 +171,45 @@ export function HoldingsPage() {
     }
 
     if (mode === 'avg') {
-      return Number(avgPrice.toFixed(6))
+      return Number(avgPrice.toFixed(2))
     }
 
-    return quantity > 0 ? Number((avgPrice * quantity).toFixed(6)) : 0
+    return quantity > 0 ? Number((avgPrice * quantity).toFixed(2)) : 0
   }
 
   function toggleCostMode() {
     setCostInputMode((current) => {
       const nextMode = current === 'avg' ? 'total' : 'avg'
-      const normalizedAvgPrice = getAveragePriceFromInput(current, costInput, draft.quantity, draft.avgPrice)
+      const normalizedAvgPrice = draft.avgPrice > 0
+        ? draft.avgPrice
+        : getAveragePriceFromInput(current, costInput, draft.quantity, draft.avgPrice)
 
       setCostInput(getCostInputFromAveragePrice(nextMode, normalizedAvgPrice, draft.quantity))
       setFormMessage(null)
       return nextMode
+    })
+  }
+
+  function handleCostInputChange(value: number) {
+    setCostInput(value)
+    setDraft((current) => {
+      const nextAvgPrice = costInputMode === 'avg'
+        ? value
+        : value > 0 && current.quantity > 0
+          ? value / current.quantity
+          : current.avgPrice
+
+      return { ...current, avgPrice: nextAvgPrice }
+    })
+  }
+
+  function handleQuantityChange(value: number) {
+    setDraft((current) => {
+      const nextAvgPrice = costInputMode === 'total' && value > 0 && costInput > 0
+        ? costInput / value
+        : current.avgPrice
+
+      return { ...current, quantity: value, avgPrice: nextAvgPrice }
     })
   }
 
@@ -208,7 +233,11 @@ export function HoldingsPage() {
       return
     }
 
-    const avgPrice = costInputMode === 'total' ? costInput / draft.quantity : costInput
+    const avgPrice = draft.avgPrice > 0
+      ? draft.avgPrice
+      : costInputMode === 'total'
+        ? costInput / draft.quantity
+        : costInput
     if (!Number.isFinite(avgPrice) || avgPrice <= 0) {
       setFormMessage('Average price could not be calculated from the current inputs.')
       return
@@ -362,7 +391,7 @@ export function HoldingsPage() {
               min="0"
               step="0.01"
               value={costInput || ''}
-              onChange={(event) => setCostInput(Number(event.target.value) || 0)}
+              onChange={(event) => handleCostInputChange(Number(event.target.value) || 0)}
               placeholder={costInputMode === 'avg' ? '185.25' : '1945.13'}
             />
           </div>
@@ -387,7 +416,7 @@ export function HoldingsPage() {
               min="0"
               step="0.0001"
               value={draft.quantity || ''}
-              onChange={(event) => setDraft((current) => ({ ...current, quantity: Number(event.target.value) || 0 }))}
+              onChange={(event) => handleQuantityChange(Number(event.target.value) || 0)}
               placeholder="10.5000"
             />
           </div>
@@ -582,7 +611,6 @@ export function HoldingsPage() {
     <div className="page-stack">
       <SectionCard
         title="Holdings"
-        description="Manual order with tag filtering."
         headClassName="fixed-track-420-3-2-1"
         actions={(
           <label className="field-inline field-inline-compact" htmlFor="holding-tag-filter">
@@ -599,12 +627,6 @@ export function HoldingsPage() {
         )}
       >
         <div className="stack-block">
-          {!spreadsheet && (showHoldingForm || editingTicker) ? (
-            <div className="message-box message-box-neutral">
-              Connect a spreadsheet before saving holdings.
-            </div>
-          ) : null}
-
           <div className="entity-card-grid entity-card-grid-holdings-top centered-fixed-card-grid fixed-grid-420-2-1">
             {renderSummaryCard()}
             {showHoldingForm ? renderEditorCard('create') : renderAddSlotCard()}
@@ -620,9 +642,11 @@ export function HoldingsPage() {
             <div className="empty-note">No holdings yet.</div>
           ) : null}
 
-          <div className={`message-box ${errorMessage ? 'message-box-error' : 'message-box-neutral'}`}>
-            {errorMessage ?? formMessage ?? 'Drag cards to reorder.'}
-          </div>
+          {(errorMessage || formMessage) ? (
+            <div className={`message-box ${errorMessage ? 'message-box-error' : 'message-box-neutral'}`}>
+              {errorMessage ?? formMessage}
+            </div>
+          ) : null}
         </div>
       </SectionCard>
     </div>

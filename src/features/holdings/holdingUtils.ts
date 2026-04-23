@@ -10,7 +10,7 @@ export function formatPercent(value: number) {
 }
 
 export function formatQuantity(value: number) {
-  const fixed = value.toFixed(6)
+  const fixed = value.toFixed(4)
   return fixed.replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1')
 }
 

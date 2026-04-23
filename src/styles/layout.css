@@ -55,71 +55,11 @@
   padding: 16px 28px 28px;
 }
 
-.topbar,
-.topbar-cluster {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
 .topbar {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
   margin-bottom: 24px;
-}
-
-.topbar-cluster {
-  justify-content: flex-end;
-  flex-wrap: wrap;
-}
-
-.topbar-card,
-.profile-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 239, 210, 0.86);
-}
-
-.profile-chip strong,
-.profile-chip span {
-  display: block;
-}
-
-.chip-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 34px;
-  height: 34px;
-  padding: 0 10px;
-  border-radius: 999px;
-  background: rgba(83, 199, 142, 0.16);
-  color: #9af0bf;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  flex: 0 0 auto;
-  align-self: center;
-}
-
-.chip-copy {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-  flex: 1 1 auto;
-  align-self: center;
-}
-
-.chip-copy strong {
-  display: block;
-}
-
-.profile-chip,
-.topbar-card {
-  align-items: center;
 }
 
 @media (max-width: 720px) {
@@ -147,38 +87,6 @@
   .topbar {
     flex-direction: column;
     align-items: stretch;
-    gap: 14px;
     margin-bottom: 16px;
-  }
-
-  .topbar-cluster {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-    align-items: stretch;
-    width: 100%;
-  }
-
-  .profile-chip,
-  .topbar-card {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 8px;
-    width: 100%;
-    min-width: 0;
-    padding: 10px 12px;
-    border-radius: 16px;
-  }
-
-  .chip-badge {
-    min-width: 30px;
-    height: 30px;
-    padding: 0 8px;
-    font-size: 0.66rem;
-  }
-
-  .chip-copy strong {
-    font-size: 0.94rem;
-    line-height: 1.25;
   }
 }

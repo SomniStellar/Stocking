@@ -17,7 +17,7 @@ Current layout:
 - Validation and fallback status caption when needed
 
 Rules:
-- Keep only `[Dev/Test]` copy that is needed for test or preview verification.
+- The global topbar does not show a persistent spreadsheet connection status chip.
 - Desktop top summary uses a single row of 4 cards when width is sufficient.
 - Mid-width top summary wraps to exactly `2 x 2`.
 - Top summary cards use a fixed width of `280px`.
@@ -36,14 +36,18 @@ Rules:
 - Benchmark cards use this structure.
   - Row 1: benchmark name | empty
   - Row 2: empty | benchmark return
-  - Row 3: low-priority delta label `vs Port.` | portfolio minus benchmark return in `%p`
+  - Row 3: low-priority delta label `vs Port.` | benchmark return minus portfolio return in `%p`
 - The delta value is color-emphasized by sign.
 - Clicking the benchmark card toggles active or inactive state.
 - Inactive state keeps the card visible but removes strong color and reduces opacity.
+- Benchmark cards can be reordered by drag-and-drop.
+- `Portfolio` stays fixed and does not participate in drag-and-drop.
+- Portfolio and benchmark accent colors are selected from a fixed palette.
 - `Add Benchmark` opens from the section title area next to `Benchmark Comparison`.
 - The open quick add UI stays inline in the title row as `Ticker input + Save + Cancel`.
 - The ticker input uses compact width sized for real ticker symbols, not a full form width.
-- Custom benchmark cards keep only a delete button in the top-right corner.
+- Benchmark cards keep top-right inline utility actions for palette selection and reorder.
+- Custom benchmark cards additionally keep inline delete in the same utility area.
 - The benchmark comparison chart belongs directly below the benchmark card section.
 - The benchmark comparison chart uses the same width rule as the benchmark card grid, so both blocks align on the same centered fixed-width track.
 - The period toggle switches the whole benchmark comparison chart range.
@@ -79,13 +83,14 @@ Rules:
   - Row 2 column 3: internal 3-row by 2-column period block for `YTD`, `3Y`, `5Y`
 - `Add Holding` card is an input form and each occupied cell uses 2 rows: label and input/control.
   - Row 1 column 1: `Ticker`
-  - Row 1 column 2: `Total Price` <-> `Avg Price` clickable toggle. Price input accepts up to 2 decimal places.
+  - Row 1 column 2: one-line `Total Price` <-> `Avg Price` clickable toggle. Price input accepts up to 2 decimal places.
   - Row 1 column 3: `Add` <-> `Reduce` segmented control, no extra label
   - Row 2 column 1: `Quantity`. Quantity input accepts up to 4 decimal places.
   - Row 2 column 2: `Tags`, case-insensitive
   - Row 2 column 3: `Save` action, no extra label
 - The `Add` and `Reduce` labels are short on purpose so the control stays within the card width.
 - The holdings input card adjusts the current position state and does not represent full transaction history editing.
+- Switching `Total Price` and `Avg Price` in holding edit should not change the effective total only because the display rounds values.
 - Holding card uses this structure.
   - Row 1 column 1: 2-row `Name`, `Ticker`
   - Row 1 column 2: 3-row `Price / Avg`, `Price`, `Avg`
@@ -98,27 +103,14 @@ Rules:
 
 ## Settings
 Purpose:
-- Account, spreadsheet connection, and app-level actions only.
+- Account and spreadsheet actions only.
 
 Rules:
 - Benchmark management does not live in Settings.
-- Settings keeps a simple 2-column section grid that collapses to 1 column on narrow widths.
-
-## Watchlists
-Purpose:
-- Keep favorites and idea rows on one page and edit them from a compact form.
-
-Current layout:
-- Section header actions: `Add watchlist`, optional `Close input`, tag filter
-- Inline form with compact 2-column field grid
-- Grouped card list by primary tag
-- Each card uses common entity card header and compact metric grid patterns
-
-Rules:
-- Watchlists does not keep a page-specific CSS file.
-- Form grid and compact metric/card header patterns come from shared control/card layers.
-- Card structure is still provisional and may later align more closely with Holdings.
-- Empty state remains a simple guidance message until the page layout is expanded further.
+- Settings uses a single centered stack.
+- Settings keeps only account status, sign-in or sign-out, sheet creation or connection, sheet sync, sheet rebuild, open sheet, and disconnect sheet actions.
+- Settings does not show internal sheet row counts in the default UI.
+- Spreadsheet quick actions are presented as one horizontal action row on desktop and may wrap only on narrower widths.
 
 ## Login
 Purpose:
@@ -126,4 +118,3 @@ Purpose:
 
 Rules:
 - Use a centered minimal layout.
-- Keep only development or test copy that is required and prefix it with `[Dev/Test]`.

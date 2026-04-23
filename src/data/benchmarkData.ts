@@ -7,6 +7,7 @@ import type {
   HoldingRow,
 } from '../types/domain'
 import type { SpreadsheetSnapshot } from '../types/sheets'
+import { normalizeAccentColor } from '../features/benchmarks/benchmarkAccent'
 
 function toBoolean(value: boolean | string | number | undefined) {
   if (typeof value === 'boolean') {
@@ -71,25 +72,22 @@ export function calculatePortfolioPeriodReturn(holdings: HoldingRow[], period: C
 export function calculatePortfolioPeriodPerformance(holdings: HoldingRow[], period: ComparisonPeriod) {
   const totals = holdings.reduce(
     (sum, row) => {
-      const currentValue = row.quantity * row.closeyest
       const periodReturn = getHoldingPeriodReturn(row, period)
-      const multiplier = 1 + periodReturn / 100
+      const invested = row.invested
 
-      if (!Number.isFinite(multiplier) || multiplier <= 0 || currentValue <= 0) {
+      if (!Number.isFinite(periodReturn) || invested <= 0) {
         return sum
       }
 
-      const basePrice = row.closeyest / multiplier
-      if (!Number.isFinite(basePrice) || basePrice <= 0) {
-        return sum
-      }
+      const profitAmount = invested * (periodReturn / 100)
 
       return {
-        current: sum.current + currentValue,
-        base: sum.base + row.quantity * basePrice,
+        current: sum.current + invested + profitAmount,
+        base: sum.base + invested,
+        profit: sum.profit + profitAmount,
       }
     },
-    { current: 0, base: 0 },
+    { current: 0, base: 0, profit: 0 },
   )
 
   if (totals.base <= 0) {
@@ -101,13 +99,11 @@ export function calculatePortfolioPeriodPerformance(holdings: HoldingRow[], peri
     }
   }
 
-  const profitAmount = totals.current - totals.base
-
   return {
     currentValue: totals.current,
     baseValue: totals.base,
-    profitAmount,
-    returnRate: (profitAmount / totals.base) * 100,
+    profitAmount: totals.profit,
+    returnRate: (totals.profit / totals.base) * 100,
   }
 }
 
@@ -123,6 +119,7 @@ export function buildBenchmarkRows(snapshot: SpreadsheetSnapshot): BenchmarkDefi
       market: normalizeText(row.market).toUpperCase(),
       name: normalizeText(row.name),
       category: normalizeText(row.category),
+      accentColor: normalizeAccentColor(row.accent_color, row.benchmark_key),
       isDefault: toBoolean(row.is_default),
       isEnabled: toBoolean(row.is_enabled),
       displayOrder: toNumber(row.display_order),
@@ -161,7 +158,7 @@ function evaluateRenderableBenchmarks(rows: BenchmarkDefinition[]) {
       return {
         ...row,
         isRenderable: false,
-        exclusionReason: 'Benchmark disabled',
+        exclusionReason: 'Disabled by you',
       }
     }
 
@@ -233,6 +230,10 @@ export function createBenchmarkStatusCaption(
   return ''
 }
 
+function createBenchmarkLoadingCaption() {
+  return 'Loading data...'
+}
+
 export function createComparisonPeriodLabel(period: ComparisonPeriod) {
   switch (period) {
     case 'YTD':
@@ -254,16 +255,40 @@ export function buildBenchmarkComparisonCards(
 
   return evaluateRenderableBenchmarks(buildBenchmarkRows(snapshot))
     .map((row) => {
+      if (!row.isEnabled) {
+        return {
+          benchmarkKey: row.benchmarkKey,
+          name: row.name || row.tickerPrimary,
+          period,
+          resolvedSource: row.resolvedSource,
+          status: row.status,
+          value: 0,
+          deltaFromPortfolio: portfolioReturn,
+          caption: row.exclusionReason,
+          accentColor: row.accentColor,
+          isEnabled: row.isEnabled,
+          isRenderable: row.isRenderable,
+          isDefault: row.isDefault,
+        }
+      }
+
       const resolvedTicker = (row.resolvedTicker || row.tickerPrimary).trim().toUpperCase()
       const monitor = monitorMap.get(resolvedTicker)
       const currentPrice = toNumber(monitor?.closeyest)
       const basePrice = getMonitorBasePrice(monitor, period)
-      const calculatedStatus = currentPrice > 0 && basePrice > 0 ? row.status : 'failed'
+      const hasComparableData = currentPrice > 0 && basePrice > 0
+      const calculatedStatus = hasComparableData
+        ? row.status
+        : row.status === 'failed'
+          ? 'failed'
+          : 'retrying'
       const value = currentPrice > 0 && basePrice > 0
         ? ((currentPrice - basePrice) / basePrice) * 100
         : 0
       const caption = !row.isRenderable
         ? row.exclusionReason
+        : !hasComparableData && calculatedStatus !== 'failed'
+          ? createBenchmarkLoadingCaption()
         : createBenchmarkStatusCaption(row.name || resolvedTicker, calculatedStatus, row.resolvedSource)
 
       return {
@@ -273,8 +298,9 @@ export function buildBenchmarkComparisonCards(
         resolvedSource: row.resolvedSource,
         status: calculatedStatus,
         value,
-        deltaFromPortfolio: portfolioReturn - value,
+        deltaFromPortfolio: value - portfolioReturn,
         caption,
+        accentColor: row.accentColor,
         isEnabled: row.isEnabled,
         isRenderable: row.isRenderable,
         isDefault: row.isDefault,

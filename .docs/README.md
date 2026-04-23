@@ -47,10 +47,9 @@
 1. `current/문서_마스터맵.md`
 2. `current/기능명세서.md`
 3. `current/대시보드_차트_개발_정리.md`
-4. `current/대시보드_차트_구현_현황.md`
-5. `current/구글시트_작성_정리.md`
-6. `current/화면별_UI_명세서.md`
-7. `current/시트_템플릿_설계서.md`
-8. `decisions/지수비교_결정사항.md`
-9. `decisions/지수비교_미결정사항.md`
-10. `decisions/차트_라이브러리_검토.md`
+4. `current/구글시트_작성_정리.md`
+5. `current/화면별_UI_명세서.md`
+6. `current/시트_템플릿_설계서.md`
+7. `decisions/지수비교_결정사항.md`
+8. `decisions/지수비교_미결정사항.md`
+9. `decisions/차트_라이브러리_검토.md`

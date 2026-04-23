@@ -41,6 +41,7 @@ export interface BenchmarksSheetRow {
   market: string
   name: string
   category: string
+  accent_color: string
   is_default: boolean
   is_enabled: boolean
   display_order: number

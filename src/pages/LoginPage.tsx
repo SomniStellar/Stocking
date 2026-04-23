@@ -10,9 +10,8 @@ export function LoginPage() {
     return <Navigate to="/dashboard" replace />
   }
 
-  // Dev/Test note: keep this helper visible only when local configuration blocks real login.
   const helperMessage = errorMessage
-    ?? (!envConfigured ? '[Dev/Test] Google client ID is not configured, so real login is unavailable.' : null)
+    ?? (!envConfigured ? 'Google sign-in is not available right now.' : null)
 
   return (
     <div className="auth-shell auth-shell-simple">
@@ -20,7 +19,6 @@ export function LoginPage() {
         <div className="auth-panel-head">
           <p className="eyebrow">Stocking</p>
           <h2>Sign in with Google</h2>
-          <p className="muted-copy">Connect your workspace to start.</p>
         </div>
 
         <button
