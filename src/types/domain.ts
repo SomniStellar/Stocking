@@ -124,33 +124,11 @@ export interface HoldingRow {
   sourceRowNumbers: number[]
 }
 
-export interface WatchlistRow {
-  rowNumber: number
-  ticker: string
-  name: string
-  listType: string
-  targetPrice: number
-  virtualQty: number
-  virtualEntryPrice: number
-  closeyest: number
-  tags: string
-}
-
 export interface HoldingDraft {
   ticker: string
   name: string
   side: 'BUY' | 'SELL'
   quantity: number
   avgPrice: number
-  tags: string
-}
-
-export interface WatchlistDraft {
-  ticker: string
-  name: string
-  listType: 'FAVORITE' | 'IDEA'
-  targetPrice: number
-  virtualQty: number
-  virtualEntryPrice: number
   tags: string
 }

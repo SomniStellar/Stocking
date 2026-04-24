@@ -1,9 +1,8 @@
 ﻿import { type PropsWithChildren, useEffect, useState } from 'react'
-import type { BenchmarkDraft, HoldingDraft, WatchlistDraft } from '../../types/domain'
+import type { BenchmarkDraft, HoldingDraft } from '../../types/domain'
 import { loadGoogleIdentityScript, requestGoogleAccessToken } from '../../lib/google/googleIdentity'
 import {
   appendHoldingRow,
-  appendWatchlistRow,
   createTemplateSpreadsheet,
   deleteSheetRows,
   ensureOptionalTemplateTabs,
@@ -30,7 +29,6 @@ const STORAGE_KEY = 'stocking.spreadsheetId'
 
 const EMPTY_SNAPSHOT: SpreadsheetSnapshot = {
   holdings: [],
-  watchlists: [],
   monitor: [],
   benchmarks: [],
   seriesCalendar: [],
@@ -44,7 +42,6 @@ const PREVIEW_HOLDINGS_SNAPSHOT: SpreadsheetSnapshot = {
     { row_number: 4, ticker: 'TSLA', name: 'Tesla', side: 'BUY', quantity: 5, avg_price: 224.6, tags: 'growth', display_order: 3 },
     { row_number: 5, ticker: 'NVDA', name: 'NVIDIA', side: 'BUY', quantity: 6, avg_price: 781.45, tags: 'ai, semis', display_order: 4 },
   ],
-  watchlists: [],
   monitor: [
     { ticker: 'SPY', full_ticker: 'NYSEARCA:SPY', closeyest: 579.12, ytd_price: 548.05, price_1y: 517.44, price_3y: 412.88, price_5y: 322.11, tradetime: '2026-04-10 09:00' },
     { ticker: 'QQQ', full_ticker: 'NASDAQ:QQQ', closeyest: 512.44, ytd_price: 471.02, price_1y: 438.61, price_3y: 339.72, price_5y: 258.47, tradetime: '2026-04-10 09:00' },
@@ -119,8 +116,8 @@ const PREVIEW_SPREADSHEET = {
   id: 'dev-preview-workspace',
   title: 'Workspace Preview',
   url: 'https://example.invalid/dev-preview-workspace',
-  sheets: ['Holdings', 'Watchlists', 'Monitor', 'Benchmarks', 'SeriesCalendar', 'Series'],
-  sheetIds: { Holdings: 0, Watchlists: 1, Monitor: 2, Benchmarks: 3, SeriesCalendar: 4, Series: 5 },
+  sheets: ['Holdings', 'Monitor', 'Benchmarks', 'SeriesCalendar', 'Series'],
+  sheetIds: { Holdings: 0, Monitor: 1, Benchmarks: 2, SeriesCalendar: 3, Series: 4 },
   isTemplateValid: true,
   checkedAt: new Date('2026-04-10T00:00:00.000Z').toISOString(),
 } satisfies GoogleWorkspaceContextValue['spreadsheet']
@@ -162,7 +159,6 @@ function buildSeedBenchmarkRows(existingRows: SpreadsheetSnapshot['benchmarks'])
 function collectMonitorTickers(snapshot: SpreadsheetSnapshot) {
   return [...new Set([
     ...snapshot.holdings.map((row) => row.ticker),
-    ...snapshot.watchlists.map((row) => row.ticker),
     ...snapshot.benchmarks.filter((row) => row.is_enabled).map((row) => row.resolved_ticker || row.ticker_primary),
   ].map((ticker) => ticker.trim().toUpperCase()).filter(Boolean))]
 }
@@ -201,7 +197,7 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     const previewMode = new URLSearchParams(window.location.search).get('preview')
     const isLocalPreviewHost = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
-    const isPreviewWorkspace = isLocalPreviewHost && (previewMode === 'holdings' || previewMode === 'dashboard' || previewMode === 'settings' || previewMode === 'watchlists')
+    const isPreviewWorkspace = isLocalPreviewHost && (previewMode === 'holdings' || previewMode === 'dashboard' || previewMode === 'settings')
 
     if (!isPreviewWorkspace) {
       return
@@ -725,8 +721,10 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
     setBusyState('writing')
     setErrorMessage(null)
 
+    const previousRows = snapshot.benchmarks
+
     try {
-      const currentRowsByKey = new Map(snapshot.benchmarks.map((row) => [row.benchmark_key.trim().toUpperCase(), row]))
+      const currentRowsByKey = new Map(previousRows.map((row) => [row.benchmark_key.trim().toUpperCase(), row]))
       const nextRows = drafts.map((draft) => {
         const benchmarkKey = draft.benchmarkKey.trim().toUpperCase()
         const tickerPrimary = draft.tickerPrimary.trim().toUpperCase()
@@ -773,21 +771,19 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
           ? currentRow.ticker_primary.trim().toUpperCase() !== row.ticker_primary
             || currentRow.ticker_fallback.trim().toUpperCase() !== row.ticker_fallback
           : false
-        const becameEnabled = currentRow ? !currentRow.is_enabled && row.is_enabled : row.is_enabled
 
         return row.is_enabled && (
           isNewRow
           || tickerChanged
-          || becameEnabled
           || !hasBenchmarkSeries(snapshot, row.benchmark_key, resolvedTicker)
         )
       })
 
-      await overwriteBenchmarkRows(spreadsheet.id, session.accessToken, nextRows, spreadsheet.sheets)
       setSnapshot((current) => ({
         ...current,
         benchmarks: nextRows,
       }))
+      await overwriteBenchmarkRows(spreadsheet.id, session.accessToken, nextRows, spreadsheet.sheets)
       if (shouldSyncMonitor || shouldSyncSeries) {
         refreshBenchmarksInBackground(spreadsheet.id, session.accessToken, {
           syncMonitor: shouldSyncMonitor,
@@ -796,6 +792,10 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
       }
       return true
     } catch (error) {
+      setSnapshot((current) => ({
+        ...current,
+        benchmarks: previousRows,
+      }))
       const message = error instanceof Error ? error.message : 'Failed to save benchmarks.'
       setErrorMessage(message)
       return false
@@ -803,97 +803,6 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
       setBusyState('idle')
     }
   }
-  async function addWatchlist(draft: WatchlistDraft) {
-    if (!session?.accessToken || !spreadsheet?.id) {
-      setErrorMessage('Connect a spreadsheet before adding watchlists.')
-      return false
-    }
-
-    setBusyState('writing')
-    setErrorMessage(null)
-
-    try {
-      const normalizedTicker = draft.ticker.trim().toUpperCase()
-      const normalizedName = draft.name.trim() || normalizedTicker
-
-      await appendWatchlistRow(spreadsheet.id, session.accessToken, {
-        row_number: 0,
-        ticker: normalizedTicker,
-        name: normalizedName,
-        list_type: draft.listType,
-        target_price: draft.targetPrice,
-        virtual_qty: draft.virtualQty,
-        virtual_entry_price: draft.virtualEntryPrice,
-        tags: draft.tags.trim(),
-      })
-
-      await refreshConnectedSpreadsheet(spreadsheet.id, session.accessToken, { syncSeries: false })
-      return true
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to save watchlist row.'
-      setErrorMessage(message)
-      return false
-    } finally {
-      setBusyState('idle')
-    }
-  }
-
-  async function updateWatchlist(rowNumber: number, draft: WatchlistDraft) {
-    if (!session?.accessToken || !spreadsheet?.id || spreadsheet.sheetIds.Watchlists == null) {
-      setErrorMessage('Connect a spreadsheet before editing watchlists.')
-      return false
-    }
-
-    setBusyState('writing')
-    setErrorMessage(null)
-
-    try {
-      await deleteSheetRows(spreadsheet.id, session.accessToken, spreadsheet.sheetIds.Watchlists, [rowNumber])
-      const normalizedTicker = draft.ticker.trim().toUpperCase()
-      const normalizedName = draft.name.trim() || normalizedTicker
-      await appendWatchlistRow(spreadsheet.id, session.accessToken, {
-        row_number: 0,
-        ticker: normalizedTicker,
-        name: normalizedName,
-        list_type: draft.listType,
-        target_price: draft.targetPrice,
-        virtual_qty: draft.virtualQty,
-        virtual_entry_price: draft.virtualEntryPrice,
-        tags: draft.tags.trim(),
-      })
-      await refreshConnectedSpreadsheet(spreadsheet.id, session.accessToken, { syncSeries: false })
-      return true
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to update watchlist row.'
-      setErrorMessage(message)
-      return false
-    } finally {
-      setBusyState('idle')
-    }
-  }
-
-  async function deleteWatchlist(rowNumber: number) {
-    if (!session?.accessToken || !spreadsheet?.id || spreadsheet.sheetIds.Watchlists == null) {
-      setErrorMessage('Connect a spreadsheet before deleting watchlists.')
-      return false
-    }
-
-    setBusyState('writing')
-    setErrorMessage(null)
-
-    try {
-      await deleteSheetRows(spreadsheet.id, session.accessToken, spreadsheet.sheetIds.Watchlists, [rowNumber])
-      await refreshConnectedSpreadsheet(spreadsheet.id, session.accessToken, { syncSeries: false })
-      return true
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to delete watchlist row.'
-      setErrorMessage(message)
-      return false
-    } finally {
-      setBusyState('idle')
-    }
-  }
-
   function logout() {
     setSession(null)
     setSpreadsheet(null)
@@ -931,9 +840,6 @@ export function GoogleWorkspaceProvider({ children }: PropsWithChildren) {
     updateHolding,
     deleteHolding,
     reorderHoldings,
-    addWatchlist,
-    updateWatchlist,
-    deleteWatchlist,
     saveBenchmarks,
     clearSpreadsheet,
   }

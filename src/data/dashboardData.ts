@@ -187,7 +187,7 @@ function buildRangeChart(
       points: [],
       lines,
       hasData: false,
-      emptyMessage: `No ${createComparisonPeriodLabel(period)} series data yet. Add SeriesCalendar and Series rows to render the chart.`,
+      emptyMessage: `${createComparisonPeriodLabel(period)} chart data is still syncing.`,
     }
   }
 
@@ -250,7 +250,7 @@ function buildRangeChart(
     hasData: hasPortfolioData,
     emptyMessage: hasPortfolioData
       ? ''
-      : `No ${createComparisonPeriodLabel(period)} portfolio series data yet. Add Series rows to render the chart.`,
+      : `${createComparisonPeriodLabel(period)} portfolio chart data is still syncing.`,
   }
 }
 

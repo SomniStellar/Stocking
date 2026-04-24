@@ -1,7 +1,6 @@
-﻿import type {
+import type {
   HoldingRow,
   StockMonitorRow,
-  WatchlistRow,
 } from '../types/domain'
 import type { SpreadsheetSnapshot } from '../types/sheets'
 import { normalizeTags } from '../features/holdings/holdingUtils'
@@ -109,20 +108,4 @@ export function buildHoldingRows(snapshot: SpreadsheetSnapshot): HoldingRow[] {
       }
     })
     .filter((row) => row.quantity > 0)
-}
-
-export function buildWatchlistRows(snapshot: SpreadsheetSnapshot): WatchlistRow[] {
-  const monitorMap = new Map(snapshot.monitor.map((row) => [row.ticker, row]))
-
-  return snapshot.watchlists.map((row) => ({
-    rowNumber: row.row_number,
-    ticker: row.ticker,
-    name: row.name || row.ticker,
-    listType: row.list_type || 'FAVORITE',
-    targetPrice: toNumber(row.target_price),
-    virtualQty: toNumber(row.virtual_qty),
-    virtualEntryPrice: toNumber(row.virtual_entry_price),
-    closeyest: toNumber(monitorMap.get(row.ticker)?.closeyest),
-    tags: normalizeTags(row.tags ?? ''),
-  }))
 }

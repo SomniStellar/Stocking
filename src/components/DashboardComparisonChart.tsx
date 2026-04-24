@@ -93,7 +93,7 @@ export function DashboardComparisonChart({
             <strong>Performance Trend</strong>
             <p>Selected range: {chart.period}</p>
           </div>
-          <span className="badge badge-muted">Series pending</span>
+          <span className="badge badge-muted">Syncing chart data</span>
         </div>
         <div className="empty-note benchmark-chart-empty">{chart.emptyMessage}</div>
       </div>

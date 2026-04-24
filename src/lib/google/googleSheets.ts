@@ -6,18 +6,17 @@ import type {
   SeriesCalendarSheetRow,
   SeriesSheetRow,
   SpreadsheetSnapshot,
-  WatchlistsSheetRow,
 } from '../../types/sheets'
 import { buildBenchmarkRows } from '../../data/benchmarkData'
 import { buildHoldingRows } from '../../data/sheetData'
 
-const REQUIRED_TABS = ['Holdings', 'Watchlists', 'Monitor', 'Benchmarks'] as const
+const REQUIRED_TABS = ['Holdings', 'Monitor', 'Benchmarks'] as const
 const OPTIONAL_TABS = ['SeriesCalendar', 'Series'] as const
+const TEMPLATE_TABS = [...REQUIRED_TABS, ...OPTIONAL_TABS] as const
 const SUPPORTED_TABS = [...REQUIRED_TABS, ...OPTIONAL_TABS] as const
 
 const TEMPLATE_HEADERS: Record<(typeof SUPPORTED_TABS)[number], string[]> = {
   Holdings: ['ticker', 'name', 'side', 'quantity', 'avg_price', 'tags', 'display_order'],
-  Watchlists: ['ticker', 'name', 'list_type', 'target_price', 'virtual_qty', 'virtual_entry_price', 'tags'],
   Monitor: ['ticker', 'full_ticker', 'closeyest', 'ytd_price', 'price_1y', 'price_3y', 'price_5y', 'tradetime'],
   Benchmarks: ['benchmark_key', 'ticker_primary', 'ticker_fallback', 'resolved_ticker', 'resolved_source', 'status', 'market', 'name', 'category', 'accent_color', 'is_default', 'is_enabled', 'display_order', 'retry_count'],
   SeriesCalendar: ['calendar_key', 'calendar_type', 'point_date', 'week_anchor', 'period_scope', 'updated_at'],
@@ -468,16 +467,6 @@ export async function fetchSpreadsheetSnapshot(spreadsheetId: string, accessToke
       tags: record.tags,
       display_order: toNumber(record.display_order),
     })),
-    watchlists: mapRows<WatchlistsSheetRow>(valueMap.get('Watchlists'), (record, rowNumber) => ({
-      row_number: rowNumber,
-      ticker: record.ticker,
-      name: record.name,
-      list_type: record.list_type,
-      target_price: toNumber(record.target_price),
-      virtual_qty: toNumber(record.virtual_qty),
-      virtual_entry_price: toNumber(record.virtual_entry_price),
-      tags: record.tags,
-    })),
     monitor: mapRows<MonitorSheetRow>(valueMap.get('Monitor'), (record) => ({
       ticker: record.ticker,
       full_ticker: record.full_ticker,
@@ -532,7 +521,7 @@ export async function createTemplateSpreadsheet(title: string, accessToken: stri
     },
     body: JSON.stringify({
       properties: { title },
-      sheets: SUPPORTED_TABS.map((name) => ({ properties: { title: name } })),
+      sheets: TEMPLATE_TABS.map((name) => ({ properties: { title: name } })),
     }),
   })
 
@@ -645,26 +634,6 @@ export async function overwriteHoldingRows(spreadsheetId: string, accessToken: s
   }
 }
 
-export async function appendWatchlistRow(spreadsheetId: string, accessToken: string, row: WatchlistsSheetRow) {
-  const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent('Watchlists!A:G')}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        values: [[row.ticker, row.name, row.list_type, row.target_price, row.virtual_qty, row.virtual_entry_price, row.tags]],
-      }),
-    },
-  )
-
-  if (!response.ok) {
-    throw new Error('Failed to append watchlist row.')
-  }
-}
-
 export async function overwriteBenchmarkRows(
   spreadsheetId: string,
   accessToken: string,
@@ -760,7 +729,6 @@ export async function resetSpreadsheetRows(spreadsheetId: string, accessToken: s
 
   const ranges = [
     getSheetDataRange('Holdings', 2),
-    getSheetDataRange('Watchlists', 2),
     getSheetDataRange('Monitor', 2),
     ...(sheets.includes('Benchmarks') ? [getSheetDataRange('Benchmarks', 2)] : []),
     ...(sheets.includes('SeriesCalendar') ? [getSheetDataRange('SeriesCalendar', 2)] : []),

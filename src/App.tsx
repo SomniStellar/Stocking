@@ -31,7 +31,6 @@ function App() {
           <Route element={<ProtectedLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/holdings" element={<HoldingsPage />} />
-            <Route path="/watchlists" element={<Navigate to="/dashboard" replace />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Route>
         </Routes>

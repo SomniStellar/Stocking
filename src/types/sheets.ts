@@ -9,17 +9,6 @@
   display_order: number
 }
 
-export interface WatchlistsSheetRow {
-  row_number: number
-  ticker: string
-  name: string
-  list_type: string
-  target_price: number
-  virtual_qty: number
-  virtual_entry_price: number
-  tags: string
-}
-
 export interface MonitorSheetRow {
   ticker: string
   full_ticker: string
@@ -68,7 +57,6 @@ export interface SeriesSheetRow {
 
 export interface SpreadsheetSnapshot {
   holdings: HoldingsSheetRow[]
-  watchlists: WatchlistsSheetRow[]
   monitor: MonitorSheetRow[]
   benchmarks: BenchmarksSheetRow[]
   seriesCalendar: SeriesCalendarSheetRow[]

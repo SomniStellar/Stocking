@@ -54,6 +54,7 @@ Rules:
 - The chart does not treat `YTD`, `3Y`, `5Y` as simultaneous X-axis points.
 - Hover values in the chart represent the selected range's current point value.
 - On initial live load, cards may appear before the chart finishes its background series sync.
+- Benchmark card enable or disable interaction should feel immediate, even if background sync still updates chart data afterward.
 - A separate top-sector portfolio profit chart is not part of the current required layout.
 - A separate top-sector portfolio profit chart may be added later after series-based data is available.
 
@@ -111,6 +112,11 @@ Rules:
 - Settings keeps only account status, sign-in or sign-out, sheet creation or connection, sheet sync, sheet rebuild, open sheet, and disconnect sheet actions.
 - Settings does not show internal sheet row counts in the default UI.
 - Spreadsheet quick actions are presented as one horizontal action row on desktop and may wrap only on narrower widths.
+
+## Current UI Follow-up
+- Benchmark toggle response speed should be improved before additional dashboard polish work.
+- `DashboardComparisonChart` lazy or deferred mount is a follow-up optimization after toggle response speed is improved.
+- Fallback wording work is not a current blocker and remains on hold.
 
 ## Login
 Purpose:
