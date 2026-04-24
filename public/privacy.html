@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stocking Privacy Policy</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0d1117;
+        --panel: rgba(18, 24, 34, 0.92);
+        --text: #f3f6fb;
+        --muted: #aab7cf;
+        --accent: #7dd3fc;
+        --border: rgba(170, 183, 207, 0.18);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", sans-serif;
+        background:
+          radial-gradient(circle at top, rgba(125, 211, 252, 0.14), transparent 32%),
+          linear-gradient(180deg, #0b1017 0%, var(--bg) 100%);
+        color: var(--text);
+      }
+
+      main {
+        width: min(860px, calc(100% - 32px));
+        margin: 48px auto;
+        padding: 32px;
+        border: 1px solid var(--border);
+        border-radius: 28px;
+        background: var(--panel);
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+      }
+
+      h1,
+      h2 {
+        margin: 0 0 16px;
+      }
+
+      h1 {
+        font-size: clamp(2rem, 5vw, 3rem);
+      }
+
+      h2 {
+        margin-top: 28px;
+        font-size: 1.1rem;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      a {
+        color: var(--accent);
+      }
+
+      ul {
+        padding-left: 20px;
+      }
+
+      .muted {
+        margin-top: -4px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Stocking Privacy Policy</h1>
+      <p class="muted">Last updated: 2026-04-24</p>
+
+      <p>
+        Stocking is a personal portfolio tracking web application that uses Google Sign-In and
+        Google Sheets chosen by the user.
+      </p>
+
+      <h2>What data Stocking accesses</h2>
+      <ul>
+        <li>Basic Google account profile information needed for sign-in</li>
+        <li>Google Sheets data from spreadsheets the user explicitly connects or creates</li>
+      </ul>
+
+      <h2>How data is used</h2>
+      <ul>
+        <li>To authenticate the user</li>
+        <li>To read, create, and update the spreadsheet data required by the app</li>
+        <li>To display the user portfolio, watchlist, and benchmark information inside the app</li>
+      </ul>
+
+      <h2>Data storage</h2>
+      <p>
+        Stocking operates as a browser-based application. Portfolio data is primarily stored in the
+        user's own Google Sheets. Authentication tokens are used only to perform the actions the
+        user requests in the current session.
+      </p>
+
+      <h2>Data sharing</h2>
+      <p>
+        Stocking does not sell user data. Data is only sent to Google APIs that are required for
+        sign-in and spreadsheet operations initiated by the user.
+      </p>
+
+      <h2>User control</h2>
+      <p>
+        Users control their spreadsheet access through their Google account and spreadsheet sharing
+        settings. Users can stop using the app at any time and can revoke Google access from their
+        Google account permissions page.
+      </p>
+
+      <h2>Contact</h2>
+      <p>
+        For support or privacy-related questions, visit
+        <a href="./support.html">the support page</a>.
+      </p>
+    </main>
+  </body>
+</html>

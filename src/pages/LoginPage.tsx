@@ -5,6 +5,9 @@ import '../styles/auth.css'
 export function LoginPage() {
   const { busyState, clientReady, envConfigured, errorMessage, login, session } =
     useGoogleWorkspace()
+  const baseUrl = import.meta.env.BASE_URL
+  const privacyUrl = `${baseUrl}privacy.html`
+  const supportUrl = `${baseUrl}support.html`
 
   if (session) {
     return <Navigate to="/dashboard" replace />
@@ -36,6 +39,18 @@ export function LoginPage() {
             {helperMessage}
           </div>
         ) : null}
+
+        <p className="auth-meta">
+          By continuing, you agree to use your own Google account and spreadsheet.
+          {' '}
+          <a href={privacyUrl} target="_blank" rel="noreferrer">
+            Privacy Policy
+          </a>
+          {' · '}
+          <a href={supportUrl} target="_blank" rel="noreferrer">
+            Support
+          </a>
+        </p>
       </section>
     </div>
   )

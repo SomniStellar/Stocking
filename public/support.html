@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stocking Support</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0d1117;
+        --panel: rgba(18, 24, 34, 0.92);
+        --text: #f3f6fb;
+        --muted: #aab7cf;
+        --accent: #7dd3fc;
+        --border: rgba(170, 183, 207, 0.18);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", sans-serif;
+        background:
+          radial-gradient(circle at top, rgba(125, 211, 252, 0.14), transparent 32%),
+          linear-gradient(180deg, #0b1017 0%, var(--bg) 100%);
+        color: var(--text);
+      }
+
+      main {
+        width: min(860px, calc(100% - 32px));
+        margin: 48px auto;
+        padding: 32px;
+        border: 1px solid var(--border);
+        border-radius: 28px;
+        background: var(--panel);
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+      }
+
+      h1,
+      h2 {
+        margin: 0 0 16px;
+      }
+
+      h1 {
+        font-size: clamp(2rem, 5vw, 3rem);
+      }
+
+      h2 {
+        margin-top: 28px;
+        font-size: 1.1rem;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      a {
+        color: var(--accent);
+      }
+
+      ul {
+        padding-left: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Stocking Support</h1>
+      <p>Last updated: 2026-04-24</p>
+
+      <p>
+        Stocking is a Google Sheets-based portfolio tracking application for monitoring holdings,
+        benchmarks, and watch items.
+      </p>
+
+      <h2>What users need</h2>
+      <ul>
+        <li>A Google account</li>
+        <li>Permission to access or create a Google Sheet for portfolio data</li>
+        <li>A modern desktop or mobile browser</li>
+      </ul>
+
+      <h2>Supported flow</h2>
+      <ul>
+        <li>Sign in with Google</li>
+        <li>Connect an existing spreadsheet or create the template from the app</li>
+        <li>Manage holdings and dashboard data from the connected sheet</li>
+      </ul>
+
+      <h2>Common issues</h2>
+      <ul>
+        <li>If Google Sign-In is unavailable, verify the app owner configured the OAuth client ID.</li>
+        <li>If sheet access fails, make sure the connected account can access the target spreadsheet.</li>
+        <li>If the app shows an unverified warning, the owner has not completed Google OAuth verification yet.</li>
+      </ul>
+
+      <h2>Policy</h2>
+      <p>
+        Review the <a href="./privacy.html">privacy policy</a> for details on data access and usage.
+      </p>
+    </main>
+  </body>
+</html>

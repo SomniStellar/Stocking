@@ -47,6 +47,23 @@
   justify-content: center;
 }
 
+.auth-meta {
+  margin: 0;
+  color: rgba(228, 235, 245, 0.72);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.auth-meta a {
+  color: #7dd3fc;
+  text-decoration: none;
+}
+
+.auth-meta a:hover {
+  text-decoration: underline;
+}
+
 .page-error-shell {
   min-height: 100vh;
   display: grid;
