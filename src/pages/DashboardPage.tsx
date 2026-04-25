@@ -16,7 +16,7 @@ import {
   validateCustomBenchmarkInput,
 } from '../features/benchmarks/benchmarkDrafts'
 import { useGoogleWorkspace } from '../features/google/GoogleWorkspaceContext'
-import { AddIcon, CloseIcon, DeleteIcon } from '../features/holdings/holdingIcons'
+import { AddIcon, CheckIcon, CloseIcon, DeleteIcon } from '../features/holdings/holdingIcons'
 import '../styles/dashboard.css'
 import type { BenchmarkComparisonCard, BenchmarkDraft, ComparisonPeriod } from '../types/domain'
 
@@ -38,11 +38,21 @@ function reorderBenchmarkDrafts(drafts: BenchmarkDraft[], orderedKeys: string[])
 }
 
 export function DashboardPage() {
-  const { busyState, saveBenchmarks, spreadsheet, snapshot } = useGoogleWorkspace()
+  const {
+    busyState,
+    connectSpreadsheet,
+    createTemplateSpreadsheet,
+    saveBenchmarks,
+    spreadsheet,
+    snapshot,
+    storedSpreadsheetId,
+  } = useGoogleWorkspace()
   const [comparisonPeriod, setComparisonPeriod] = useState<ComparisonPeriod>('YTD')
   const [showQuickAddInput, setShowQuickAddInput] = useState(false)
   const [quickAddTicker, setQuickAddTicker] = useState('')
   const [quickAddError, setQuickAddError] = useState<string | null>(null)
+  const [showSheetConnectInput, setShowSheetConnectInput] = useState(false)
+  const [sheetIdInput, setSheetIdInput] = useState(storedSpreadsheetId)
   const [openAccentPickerKey, setOpenAccentPickerKey] = useState<string | null>(null)
   const [portfolioAccentColor, setPortfolioAccentColor] = useState(DEFAULT_PORTFOLIO_ACCENT_COLOR)
   const [draggingBenchmarkKey, setDraggingBenchmarkKey] = useState<string | null>(null)
@@ -56,6 +66,10 @@ export function DashboardPage() {
       setPortfolioAccentColor(saved)
     }
   }, [])
+
+  useEffect(() => {
+    setSheetIdInput(storedSpreadsheetId)
+  }, [storedSpreadsheetId])
 
   useEffect(() => {
     if (!openAccentPickerKey) {
@@ -159,6 +173,14 @@ export function DashboardPage() {
         displayOrder: getNextBenchmarkDisplayOrder(benchmarkDrafts),
       },
     ])
+  }
+
+  async function handleCreateSpreadsheet() {
+    await createTemplateSpreadsheet('Stocking Portfolio')
+  }
+
+  async function handleConnectSpreadsheet() {
+    await connectSpreadsheet(sheetIdInput)
   }
 
   async function handleBenchmarkToggle(benchmarkKey: string) {
@@ -305,6 +327,7 @@ export function DashboardPage() {
 
   function renderBenchmarkCard(card: BenchmarkComparisonCard) {
     const isMuted = !card.isEnabled
+    const hasStatusMessage = Boolean(card.caption)
     const toneClass = isMuted
       ? 'benchmark-card-tone-neutral'
       : card.value >= 0
@@ -336,6 +359,7 @@ export function DashboardPage() {
           toneClass,
           isMuted ? 'benchmark-card-disabled' : 'benchmark-card-enabled',
           draggingBenchmarkKey === card.benchmarkKey ? 'benchmark-card-dragging' : '',
+          hasStatusMessage ? 'benchmark-card-has-status' : '',
           dropClass,
         ].filter(Boolean).join(' ')}
         style={{ '--benchmark-accent': accentColor } as CSSProperties}
@@ -440,14 +464,14 @@ export function DashboardPage() {
         disabled={!spreadsheet || busyState !== 'idle' || customBenchmarkCount >= 3}
       />
       <button
-        className="secondary-button benchmark-inline-add-button"
+        className="icon-button benchmark-inline-add-button"
         type="button"
         onClick={() => { void handleQuickAddBenchmark() }}
         disabled={!spreadsheet || busyState !== 'idle' || customBenchmarkCount >= 3}
         aria-label="Add benchmark ticker"
         title="Add benchmark ticker"
       >
-        Save
+        <CheckIcon />
       </button>
       <button
         className="icon-button benchmark-inline-add-cancel"
@@ -481,21 +505,73 @@ export function DashboardPage() {
   )
 
   return (
-    <div className="page-stack" ref={dashboardRootRef}>
-      <section className="summary-grid summary-grid-dashboard centered-fixed-card-grid fixed-grid-280-4-2-1">
-        <SummaryCard title="Portfolio Value" value={`$${totalValue.toFixed(2)}`} tone="neutral" />
-        <SummaryCard title="Invested Cost" value={`$${totalInvested.toFixed(2)}`} tone="neutral" />
-        <SummaryCard title="Unrealized P/L" value={`${totalProfit >= 0 ? '+' : '-'}$${Math.abs(totalProfit).toFixed(2)}`} tone={totalProfit >= 0 ? 'positive' : 'negative'} />
-        <SummaryCard title="Return" value={`${totalYield >= 0 ? '+' : ''}${totalYield.toFixed(2)}%`} tone={totalYield >= 0 ? 'positive' : 'negative'} className="summary-card-plain-value" />
+    <div className="page-stack dashboard-stack" ref={dashboardRootRef}>
+      {!spreadsheet ? (
+        <SectionCard
+          title="Start with a spreadsheet"
+          description="Create a new template or connect an existing sheet to begin."
+          className="dashboard-onboarding-section"
+          bodyClassName="dashboard-onboarding-body"
+        >
+          <div className="stack-block dashboard-onboarding-stack">
+            <div className="button-row dashboard-onboarding-actions">
+              <button
+                className="primary-button"
+                type="button"
+                onClick={() => { void handleCreateSpreadsheet() }}
+                disabled={busyState !== 'idle'}
+              >
+                {busyState === 'creating' ? 'Creating...' : 'Create new sheet'}
+              </button>
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() => setShowSheetConnectInput((current) => !current)}
+                disabled={busyState !== 'idle'}
+              >
+                {showSheetConnectInput ? 'Hide connect' : 'Connect existing'}
+              </button>
+            </div>
+            {showSheetConnectInput ? (
+              <div className="dashboard-onboarding-connect">
+                <input
+                  className="text-input"
+                  value={sheetIdInput}
+                  onChange={(event) => setSheetIdInput(event.target.value)}
+                  placeholder="Spreadsheet ID"
+                />
+                <button
+                  className="icon-button"
+                  type="button"
+                  onClick={() => { void handleConnectSpreadsheet() }}
+                  disabled={busyState !== 'idle' || !sheetIdInput.trim()}
+                  aria-label="Connect spreadsheet"
+                  title="Connect spreadsheet"
+                >
+                  <CheckIcon />
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </SectionCard>
+      ) : null}
+
+      <section className="section-card dashboard-summary-section">
+        <div className="summary-grid summary-grid-dashboard centered-fixed-card-grid fixed-grid-280-4-2-1">
+          <SummaryCard title="Portfolio Value" value={`$${totalValue.toFixed(2)}`} tone="neutral" />
+          <SummaryCard title="Invested Cost" value={`$${totalInvested.toFixed(2)}`} tone="neutral" />
+          <SummaryCard title="Unrealized P/L" value={`${totalProfit >= 0 ? '+' : '-'}$${Math.abs(totalProfit).toFixed(2)}`} tone={totalProfit >= 0 ? 'positive' : 'negative'} />
+          <SummaryCard title="Return" value={`${totalYield >= 0 ? '+' : ''}${totalYield.toFixed(2)}%`} tone={totalYield >= 0 ? 'positive' : 'negative'} className="summary-card-plain-value" />
+        </div>
       </section>
 
       <SectionCard
-        title="Benchmark Comparison"
+        title="Benchmarks"
         titleActions={benchmarkTitleActions}
         description=""
-        headClassName="fixed-track-280-4-3-2-1"
+        headClassName="fixed-track-280-4-3-2-1 benchmark-section-head"
         actions={(
-          <div className="period-toggle-row">
+          <div className="period-toggle-row benchmark-period-toggle-toolbar">
             {COMPARISON_PERIODS.map((period) => (
               <button
                 key={period}
@@ -561,7 +637,12 @@ export function DashboardPage() {
           {comparisonCards.map((card) => renderBenchmarkCard(card))}
         </div>
 
-        <DashboardComparisonChart chart={chart} />
+        <DashboardComparisonChart
+          chart={chart}
+          periods={COMPARISON_PERIODS}
+          selectedPeriod={comparisonPeriod}
+          onSelectPeriod={setComparisonPeriod}
+        />
       </SectionCard>
     </div>
   )

@@ -8,9 +8,13 @@ import {
   YAxis,
 } from 'recharts'
 import type { DashboardRangeChartModel } from '../types/domain'
+import type { ComparisonPeriod } from '../types/domain'
 
 interface DashboardComparisonChartProps {
   chart: DashboardRangeChartModel
+  periods: readonly ComparisonPeriod[]
+  selectedPeriod: ComparisonPeriod
+  onSelectPeriod: (period: ComparisonPeriod) => void
 }
 
 interface ChartTooltipPayloadEntry {
@@ -84,6 +88,9 @@ function ComparisonTooltip({
 
 export function DashboardComparisonChart({
   chart,
+  periods,
+  selectedPeriod,
+  onSelectPeriod,
 }: DashboardComparisonChartProps) {
   if (!chart.hasData) {
     return (
@@ -92,6 +99,18 @@ export function DashboardComparisonChart({
           <div>
             <strong>Performance Trend</strong>
             <p>Selected range: {chart.period}</p>
+          </div>
+          <div className="period-toggle-row benchmark-chart-period-toggle" role="group" aria-label="Chart range">
+            {periods.map((period) => (
+              <button
+                key={period}
+                className={`period-toggle ${selectedPeriod === period ? 'period-toggle-active' : ''}`}
+                onClick={() => onSelectPeriod(period)}
+                type="button"
+              >
+                {period}
+              </button>
+            ))}
           </div>
           <span className="badge badge-muted">Syncing chart data</span>
         </div>
@@ -107,7 +126,18 @@ export function DashboardComparisonChart({
           <strong>Performance Trend</strong>
           <p>Portfolio and active benchmarks for the selected range.</p>
         </div>
-        <span className="badge badge-muted">Range: {chart.period}</span>
+        <div className="period-toggle-row benchmark-chart-period-toggle" role="group" aria-label="Chart range">
+          {periods.map((period) => (
+            <button
+              key={period}
+              className={`period-toggle ${selectedPeriod === period ? 'period-toggle-active' : ''}`}
+              onClick={() => onSelectPeriod(period)}
+              type="button"
+            >
+              {period}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="benchmark-chart-frame">

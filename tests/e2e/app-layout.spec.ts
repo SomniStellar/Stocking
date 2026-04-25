@@ -9,12 +9,12 @@ async function openHoldingsPreview(page: import('@playwright/test').Page) {
 
 async function openDashboardPreview(page: import('@playwright/test').Page) {
   await page.goto('/?preview=dashboard#/dashboard')
-  await expect(page.getByRole('heading', { name: 'Benchmark Comparison' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Benchmarks' })).toBeVisible()
 }
 
 async function openSettingsPreview(page: import('@playwright/test').Page) {
   await page.goto('/?preview=settings#/settings')
-  await expect(page.getByRole('heading', { name: 'Connected Account' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Account' })).toBeVisible()
 }
 
 test.describe('Stocking app smoke', () => {
@@ -47,10 +47,11 @@ test.describe('Stocking app smoke', () => {
   test('settings preview renders connection settings only', async ({ page }) => {
     await openSettingsPreview(page)
 
-    await expect(page.getByRole('heading', { name: 'Connected Account' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Create Template Spreadsheet' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Sheet Data Snapshot' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Benchmark Comparison' })).toHaveCount(0)
+    await expect(page.getByRole('heading', { name: 'Account' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Spreadsheet' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Create new sheet' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Connect existing' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Benchmarks' })).toHaveCount(0)
   })
 
   test('holdings preview desktop capture', async ({ page }) => {

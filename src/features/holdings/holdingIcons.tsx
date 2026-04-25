@@ -42,3 +42,11 @@ export function CloseIcon() {
     </svg>
   )
 }
+
+export function CheckIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" fill="none">
+      <path d="m5 12 4.5 4.5L19 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}

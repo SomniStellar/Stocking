@@ -29,12 +29,6 @@ export function AppLayout() {
       </aside>
 
       <main className="main-panel">
-        <header className="topbar">
-          <div>
-            <h2>Portfolio Workspace</h2>
-          </div>
-        </header>
-
         <Outlet />
       </main>
     </div>

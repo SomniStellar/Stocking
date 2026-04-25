@@ -608,7 +608,7 @@ export function HoldingsPage() {
   }
 
   return (
-    <div className="page-stack">
+    <div className="page-stack holdings-stack">
       <SectionCard
         title="Holdings"
         headClassName="fixed-track-420-3-2-1"

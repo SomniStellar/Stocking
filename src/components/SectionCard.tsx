@@ -1,24 +1,28 @@
 import type { ReactNode } from 'react'
 
 interface SectionCardProps {
+  className?: string
   title: string
   description?: string
   titleActions?: ReactNode
   actions?: ReactNode
   headClassName?: string
+  bodyClassName?: string
   children: ReactNode
 }
 
 export function SectionCard({
+  className,
   title,
   description,
   titleActions,
   actions,
   headClassName,
+  bodyClassName,
   children,
 }: SectionCardProps) {
   return (
-    <section className="section-card">
+    <section className={['section-card', className].filter(Boolean).join(' ')}>
       <div className={['section-card-head', headClassName].filter(Boolean).join(' ')}>
         <div className="section-card-title-group">
           <div className="section-card-title-row">
@@ -29,7 +33,7 @@ export function SectionCard({
         </div>
         {actions ? <div className="section-card-actions">{actions}</div> : null}
       </div>
-      <div>{children}</div>
+      <div className={bodyClassName}>{children}</div>
     </section>
   )
 }

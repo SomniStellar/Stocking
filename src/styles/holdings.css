@@ -2,6 +2,11 @@
   margin-bottom: 2px;
 }
 
+.holdings-stack {
+  width: min(100%, 1330px);
+  margin-inline: auto;
+}
+
 .entity-card-grid-holdings-top,
 .entity-card-grid-holdings,
 .holdings-summary-grid {
@@ -265,15 +270,44 @@
 }
 
 @media (max-width: 560px) {
+  .holdings-stack {
+    width: 100%;
+  }
+
   .holding-input-grid {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     grid-template-areas:
-      'ticker'
-      'cost'
-      'side'
-      'quantity'
-      'tags'
-      'save';
+      'ticker cost side'
+      'quantity tags save';
+    gap: 12px;
+  }
+
+  .holding-input-cell,
+  .holding-cell,
+  .holding-summary-cell {
+    min-height: 104px;
+  }
+
+  .entity-card-grid-holdings-top .entity-card-topline,
+  .entity-card-grid-holdings .entity-card-topline {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    gap: 10px;
+  }
+
+  .entity-card-grid-holdings-top .tag-chip-row,
+  .entity-card-grid-holdings .tag-chip-row {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .entity-card-grid-holdings-top .card-icon-actions,
+  .entity-card-grid-holdings .card-icon-actions {
+    flex: 0 0 auto;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
   }
 }
 

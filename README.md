@@ -1,6 +1,6 @@
 # Stocking
 
-Stocking is a transaction-driven web app for monitoring US stock portfolios with Google Sheets as the primary data store.
+Stocking is a web app for monitoring a US stock portfolio with Google Sheets as the primary data store.
 
 ## Features
 
@@ -8,11 +8,10 @@ Stocking is a transaction-driven web app for monitoring US stock portfolios with
 - Previous-close based monitoring
 - Google login and Google Sheets integration
 - Template spreadsheet creation from the app
-- In-app BUY and SELL trade input
+- In-app current position adjustment input
 - Fractional quantity and decimal price support
-- Auto-calculated current holdings from transaction rows
-- Favorites watchlist
-- Idea portfolio tracking
+- Portfolio summary and benchmark comparison dashboard
+- Google Sheets based benchmark and chart sync
 
 ## Tech Stack
 
