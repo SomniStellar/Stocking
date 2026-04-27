@@ -22,6 +22,11 @@ Stocking is a web app for monitoring a US stock portfolio with Google Sheets as 
 - Google Sheets API
 - Google Identity Services
 
+## Project Docs
+
+- Product and setup documents: [docs](E:/WorkSpace/Stocking/docs/README.md:1)
+- Codex workspace notes: [codex](E:/WorkSpace/Stocking/codex/REFERENCE.md:1)
+
 ## Local Setup
 
 1. Install dependencies.

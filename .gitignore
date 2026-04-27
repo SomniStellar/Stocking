@@ -20,10 +20,6 @@ coverage
 .env.*
 !.env.example
 
-# Local working notes
-.codex/
-.docs/
-
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
