@@ -2,100 +2,121 @@
 
 Stocking is a web app for monitoring a US stock portfolio with Google Sheets as the primary data store.
 
-## Features
+## For Users
 
-- US stocks focused workflow
-- Previous-close based monitoring
-- Google login and Google Sheets integration
-- Template spreadsheet creation from the app
-- In-app current position adjustment input
-- Fractional quantity and decimal price support
-- Portfolio summary and benchmark comparison dashboard
-- Google Sheets based benchmark and chart sync
+Stocking is built for people who want to track a US stock portfolio in a browser while keeping the source data in their own Google Sheet.
 
-## Tech Stack
+### What you can do
 
-- React
-- TypeScript
-- Vite
-- Codex
-- Google Sheets API
-- Google Identity Services
+- Sign in with Google
+- Create a template spreadsheet from the app
+- Connect an existing spreadsheet
+- Adjust current positions in the app
+- Review portfolio summary cards
+- Compare portfolio performance against benchmarks
 
-## Project Docs
+### Live site
 
-- Product and setup documents: [docs](E:/WorkSpace/Stocking/docs/README.md:1)
-- Codex workspace notes: [codex](E:/WorkSpace/Stocking/codex/REFERENCE.md:1)
+- App: `https://somnistellar.github.io/Stocking/`
+- Privacy policy: `https://somnistellar.github.io/Stocking/privacy.html`
+- Support: `https://somnistellar.github.io/Stocking/support.html`
 
-## Local Setup
+### What you need
 
-1. Install dependencies.
-2. Create `.env.local` from `.env.example`.
-3. Set `VITE_GOOGLE_CLIENT_ID` to your Google OAuth web client ID.
-4. Run `npm run dev`.
+- A Google account
+- Access to Google Sheets
+- A modern browser
 
-## GitHub Pages Deploy
+### Important note
+
+This app uses Google OAuth and Google Sheets access directly in the browser. During a small rollout, users may see an unverified app warning until full Google verification is completed.
+
+## For Deployment Operators
 
 This repository is configured for GitHub Pages deployment through GitHub Actions.
 
-### Repository setup
+### GitHub setup
 
 1. Push to the `main` branch.
 2. In GitHub, open `Settings > Pages`.
 3. Set the build source to `GitHub Actions`.
 4. In `Settings > Secrets and variables > Actions`, add `VITE_GOOGLE_CLIENT_ID` as a repository secret.
 
-The workflow file is [deploy.yml](E:/WorkSpace/Stocking/.github/workflows/deploy.yml:1).
+Related files:
 
-### Production URL
+- Workflow: [.github/workflows/deploy.yml](./.github/workflows/deploy.yml)
+- Vite base path: [vite.config.ts](./vite.config.ts)
 
-- App URL: `https://somnistellar.github.io/Stocking/`
-- Privacy policy URL: `https://somnistellar.github.io/Stocking/privacy.html`
-- Support URL: `https://somnistellar.github.io/Stocking/support.html`
-
-The Vite base path is already configured for this repository name in [vite.config.ts](E:/WorkSpace/Stocking/vite.config.ts:1).
-
-## Google Cloud Setup
-
-This app uses Google Identity Services and the Google Sheets API directly in the browser.
-
-### Required setup
+### Google Cloud setup
 
 1. Create a Google Cloud project.
-2. Enable the Google Sheets API.
+2. Enable `Google Sheets API`.
 3. Create an OAuth 2.0 Client ID for a web application.
 4. Add this authorized JavaScript origin:
    - `https://somnistellar.github.io`
 5. Configure the OAuth consent screen.
 6. Add the scopes used by the app, including Google Sheets access.
 
-### Current access model
+The current Google sign-in and Sheets access flow is implemented in [src/lib/google/googleIdentity.ts](./src/lib/google/googleIdentity.ts).
 
-The app requests Google account identity scopes and the Sheets scope in [src/lib/google/googleIdentity.ts](E:/WorkSpace/Stocking/src/lib/google/googleIdentity.ts:1).
+### Small rollout options
 
-## Small Rollout Guidance
+#### Testing mode
 
-For a small initial rollout, there are two realistic options:
+- Only users explicitly added as test users can sign in
+- Best for a closed pilot
 
-### Option A: Testing mode
+#### External + In Production without verification
 
-- Only users explicitly added as test users can sign in.
-- Good for a closed pilot with known users.
-- Bad for ad hoc sharing.
+- New users can see the unverified app warning
+- Google applies a lifetime cap of 100 new users for apps showing that warning
+- Suitable only for a controlled small rollout
 
-### Option B: External + In Production without verification
+If broader public access is required, plan for full OAuth verification and a custom domain strategy.
 
-- New users can see the unverified app warning.
-- Google applies a lifetime cap of 100 new users for apps showing the unverified warning.
-- This is acceptable only for a controlled small rollout.
+### Deployment checklist
 
-If you expect unknown users to keep joining over time, move to full OAuth verification before public sharing.
+- GitHub Pages is enabled with `GitHub Actions`
+- `VITE_GOOGLE_CLIENT_ID` is set in GitHub Actions secrets
+- Google Sheets API is enabled
+- OAuth consent screen is configured
+- Authorized JavaScript origin includes the GitHub Pages host
+- Privacy policy and support pages are published
 
-## Operational Checklist
+## For Reusers And Developers
 
-- GitHub repository has Pages enabled with GitHub Actions.
-- `VITE_GOOGLE_CLIENT_ID` is set in GitHub Actions secrets.
-- Google Cloud OAuth consent screen is configured.
-- Google Sheets API is enabled.
-- Authorized JavaScript origin includes the GitHub Pages host.
-- Privacy policy and app homepage are prepared before broader public release.
+### Tech stack
+
+- React
+- TypeScript
+- Vite
+- React Router
+- Recharts
+- Google Identity Services
+- Google Sheets API
+
+### Local setup
+
+1. Install Node.js 22 or a compatible current Node.js runtime.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Create `.env.local` from `.env.example`.
+4. Set `VITE_GOOGLE_CLIENT_ID` to your Google OAuth web client ID.
+5. Start the app:
+   ```bash
+   npm run dev
+   ```
+6. Open the local Vite URL shown in the terminal. The repo is configured for local preview on `127.0.0.1:4173`.
+
+### Useful scripts
+
+- `npm run dev`
+- `npm run build`
+- `npm run lint`
+- `npm run test:e2e`
+
+### Project docs
+
+- Product and setup documents: [docs/README.md](./docs/README.md)
